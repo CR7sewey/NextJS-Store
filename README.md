@@ -120,3 +120,115 @@ npx shadcn-ui@latest add breadcrumb card checkbox dropdown-menu input label popo
   - navbar
   - products
   - single-product
+
+### Navbar - Setup
+
+- create
+
+- navbar
+  - CartButton
+  - DarkMode
+  - LinksDropdown
+  - Logo
+  - Navbar
+  - NavSearch
+  - SignOutLink
+  - UserIcon
+
+### Container Component
+
+- create globals/Container.tsx
+
+```tsx
+import { cn } from "@/lib/utils";
+
+function Container({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn("mx-auto max-w-6xl xl:max-w-7xl px-8", className)}>
+      {children}
+    </div>
+  );
+}
+
+export default Container;
+```
+
+cn() function takes any number of arguments (which are expected to be strings or falsy values), filters out any falsy values (like false, null, undefined, 0, NaN, and empty string ""), and then joins the remaining strings into a single string with spaces in between.
+
+### Navbar Component
+
+```tsx
+import Logo from "./Logo";
+import LinksDropdown from "./LinksDropdown";
+import DarkMode from "./DarkMode";
+import CartButton from "./CartButton";
+import NavSearch from "./NavSearch";
+import Container from "../global/Container";
+function Navbar() {
+  return (
+    <nav className="border-b ">
+      <Container className="flex flex-col sm:flex-row  sm:justify-between sm:items-center flex-wrap gap-4 py-8">
+        <Logo />
+        <NavSearch />
+        <div className="flex gap-4 items-center ">
+          <CartButton />
+          <DarkMode />
+          <LinksDropdown />
+        </div>
+      </Container>
+    </nav>
+  );
+}
+export default Navbar;
+```
+
+- layout.tsx
+
+```tsx
+import Navbar from "@/components/navbar/Navbar";
+import Container from "@/components/global/Container";
+
+return (
+  <html lang="en">
+    <body className={inter.className}>
+      <Navbar />
+      <Container className="py-20">{children}</Container>
+    </body>
+  </html>
+);
+```
+
+### Logo
+
+```sh
+npm install react-icons
+```
+
+[React Icons](https://react-icons.github.io/react-icons/)
+
+Logo.tsx
+
+```tsx
+import Link from "next/link";
+import { Button } from "../ui/button";
+import { LuArmchair } from "react-icons/lu";
+import { VscCode } from "react-icons/vsc";
+
+function Logo() {
+  return (
+    <Button size="icon" asChild>
+      <Link href="/">
+        <VscCode className="w-6 h-6" />
+      </Link>
+    </Button>
+  );
+}
+
+export default Logo;
+```
