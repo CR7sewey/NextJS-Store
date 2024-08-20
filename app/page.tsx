@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import Containers from "@/components/global/Containers";
 
 export default function Home() {
   return (

@@ -1,7 +1,7 @@
 import React from "react";
 
 function NavSearch() {
-  return <div></div>;
+  return <div>NavSearch</div>;
 }
 
 export default NavSearch;

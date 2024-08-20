@@ -1,7 +1,7 @@
 import React from "react";
 
 function Logo() {
-  return <div></div>;
+  return <div>LOGO</div>;
 }
 
 export default Logo;
