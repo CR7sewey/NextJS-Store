@@ -5,6 +5,7 @@ import Navbat from "@/components/navbar/Navbat";
 import NavSearch from "@/components/navbar/NavSearch";
 import CartButton from "@/components/navbar/CartButton";
 import Containers from "@/components/global/Containers";
+import Providers from "./providers";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,8 +22,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <Navbat />
-        <Containers className="py-20">{children}</Containers>
+        <Providers>
+          <Navbat />
+          <Containers className="py-20">{children}</Containers>
+        </Providers>
       </body>
     </html>
   );

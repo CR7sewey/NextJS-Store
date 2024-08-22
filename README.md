@@ -277,3 +277,40 @@ async function CartButton() {
 }
 export default CartButton;
 ```
+
+### Theme
+
+[Theming Options](https://ui.shadcn.com/docs/theming)
+[Themes](https://ui.shadcn.com/themes)
+
+- replace css variables in in globals.css
+
+### Providers
+
+- create app/providers.tsx
+
+```tsx
+"use client";
+
+function Providers({ children }: { children: React.ReactNode }) {
+  return <>{children}</>;
+}
+export default Providers;
+```
+
+layout.tsx
+
+```tsx
+import Providers from "./providers";
+
+return (
+  <html lang="en" suppressHydrationWarning>
+    <body className={inter.className}>
+      <Providers>
+        <Navbar />
+        <Container className="py-20">{children}</Container>
+      </Providers>
+    </body>
+  </html>
+);
+```
