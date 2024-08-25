@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { links } from "@/app/utils/links";
+import { links } from "@/utils/links";
 import Link from "next/link";
 import { RowsIcon } from "@radix-ui/react-icons";
 import { LuAlignLeft } from "react-icons/lu";
@@ -30,7 +30,10 @@ function LinksDropdown() {
         {links.map((vals) => {
           return (
             <DropdownMenuItem key={vals.label} asChild>
-              <Link href={vals.href} className="capitalize w-full">
+              <Link
+                href={vals.href}
+                className="capitalize w-full hover:font-bold"
+              >
                 {vals.label}
               </Link>
             </DropdownMenuItem>
