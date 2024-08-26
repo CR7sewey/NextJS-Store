@@ -570,3 +570,111 @@ npx prisma db push
 ```bash
 npx prisma studio
 ```
+
+## Optional - Prisma Crud
+
+[Prisma Docs](https://www.prisma.io/docs/concepts/components/prisma-client/crud)
+
+- Create Single Record
+
+```js
+const task = await prisma.task.create({
+  data: {
+    content: "some task",
+  },
+});
+```
+
+- Get All Records
+
+```js
+const tasks = await prisma.task.findMany();
+```
+
+- Get record by ID or unique identifier
+
+```js
+// By unique identifier
+const user = await prisma.user.findUnique({
+  where: {
+    email: "elsa@prisma.io",
+  },
+});
+
+// By ID
+const task = await prisma.task.findUnique({
+  where: {
+    id: id,
+  },
+});
+```
+
+- Update Record
+
+```js
+const updateTask = await prisma.task.update({
+  where: {
+    id: id,
+  },
+  data: {
+    content: "updated task",
+  },
+});
+```
+
+- Update or create records
+
+```js
+const upsertTask = await prisma.task.upsert({
+  where: {
+    id: id,
+  },
+  update: {
+    content: "some value",
+  },
+  create: {
+    content: "some value",
+  },
+});
+```
+
+- Delete a single record
+
+```js
+const deleteTask = await prisma.task.delete({
+  where: {
+    id: id,
+  },
+});
+```
+
+### Practice Prisma Queries
+
+about/page.tsx
+
+```tsx
+import db from "@/utils/db";
+
+async function AboutPage() {
+  const profile = await db.testProfile.create({
+    data: {
+      name: "random name",
+    },
+  });
+
+  const users = await db.testProfile.findMany();
+
+  return (
+    <div>
+      {users.map((user) => {
+        return (
+          <h2 key={user.id} className="text-2xl font-bold">
+            {user.name}
+          </h2>
+        );
+      })}
+    </div>
+  );
+}
+export default AboutPage;
+```
