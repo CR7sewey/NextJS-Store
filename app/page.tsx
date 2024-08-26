@@ -6,7 +6,7 @@ import { task, tasks } from "@/utils/actions";
 import { useEffect, useState } from "react";
 
 export default function Home() {
-  const [inc, setInc] = useState(0);
+  /*const [inc, setInc] = useState(0);
   const [users, setUsers] = useState<{ id: string; name: string }[]>([]);
   const userss = async () => {
     return await tasks();
@@ -18,7 +18,7 @@ export default function Home() {
     setUsers(await userss());
     console.log("here 2");
   };
-
+*/
   /*useEffect(() => {
     const u = async () => {
       const newU = await tasks();
@@ -30,17 +30,9 @@ export default function Home() {
   return (
     <div>
       <h1 className="text-3xl">HomePage</h1>
-      <Button
-        variant="outline"
-        size="lg"
-        className="capitalize m-8"
-        onClick={createUser}
-      >
+      <Button variant="outline" size="lg" className="capitalize m-8">
         click me
       </Button>
-      {users.map((v) => {
-        return <h1 key={v.id}>{v.name}</h1>;
-      })}
     </div>
   );
 }

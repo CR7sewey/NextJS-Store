@@ -1,7 +1,7 @@
 "use server";
 
 import prisma from "./db";
-
+/*
 export const task = async () => {
   await prisma.testProfile.create({
     data: {
@@ -18,3 +18,4 @@ export const tasks = async (): Promise<
 > => {
   return await prisma.testProfile.findMany();
 };
+*/
