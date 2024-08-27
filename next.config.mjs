@@ -9,8 +9,11 @@ const nextConfig = {
         pathname:
           "/image.4664960894.7913/raf,360x360,075,t,fafafa:ca443f4786.jpg/**",
       },
+      {
+        protocol: "https",
+        hostname: "images.pexels.com",
+      },
     ],
   },
 };
-
 export default nextConfig;

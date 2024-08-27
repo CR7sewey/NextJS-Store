@@ -1,8 +1,6 @@
 import React from "react";
 import { fetchFeaturedProducts } from "@/utils/actions";
 import EmptyList from "../global/EmptyList";
-import { Card } from "../ui/card";
-import Image from "next/image";
 import SectionTitle from "../global/SectionTitle";
 import ProductsGrid from "../products/ProductsGrid";
 
