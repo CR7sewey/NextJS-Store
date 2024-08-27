@@ -32,7 +32,6 @@ export default function Home() {
 
   return (
     <>
-      <SectionTitle text="My text" />
       <Hero />
       <FeaturedProducts />
     </>
