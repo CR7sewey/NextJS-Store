@@ -1,4 +1,3 @@
-"use client";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Containers from "@/components/global/Containers";
@@ -36,7 +35,6 @@ export default function Home() {
       <SectionTitle text="My text" />
       <Hero />
       <FeaturedProducts />
-      <EmptyList className="hover:font-bold" />
     </>
   );
 }
