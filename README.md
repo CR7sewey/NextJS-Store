@@ -783,3 +783,77 @@ node prisma/seed
 ```
 
 - check prisma studio
+
+### Create More Components
+
+- global
+
+  - EmptyList
+  - SectionTitle
+  - LoadingContainer
+
+- home
+
+  - FeaturedProducts
+  - Hero
+  - HeroCarousel
+
+- products
+  - FavoriteToggleButton
+  - FavoriteToggleForm
+  - ProductsContainer
+  - ProductsGrid
+  - ProductsList
+
+### Home Page
+
+```tsx
+import FeaturedProducts from "@/components/home/FeaturedProducts";
+import Hero from "@/components/home/Hero";
+
+function HomPage() {
+  return (
+    <>
+      <Hero />
+      <FeaturedProducts />
+    </>
+  );
+}
+export default HomPage;
+```
+
+### SectionTitle Component
+
+```tsx
+import { Separator } from "@/components/ui/separator";
+
+function SectionTitle({ text }: { text: string }) {
+  return (
+    <div>
+      <h2 className="text-3xl font-medium tracking-wider capitalize mb-8">
+        {text}
+      </h2>
+      <Separator />
+    </div>
+  );
+}
+export default SectionTitle;
+```
+
+### EmptyList Component
+
+```tsx
+import { cn } from "@/lib/utils";
+
+function EmptyList({
+  heading = "No items found.",
+  className,
+}: {
+  heading?: string;
+  className?: string;
+}) {
+  return <h2 className={cn("text-xl ", className)}>{heading}</h2>;
+}
+
+export default EmptyList;
+```
