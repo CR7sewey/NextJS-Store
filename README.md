@@ -1086,3 +1086,83 @@ function HeroCarousel() {
 }
 export default HeroCarousel;
 ```
+
+### About Page
+
+```tsx
+function AboutPage() {
+  return (
+    <section>
+      <h1 className="flex flex-wrap gap-2 sm:gap-x-6 items-center justify-center text-4xl font-bold leading-none tracking-wide sm:text-6xl">
+        We love
+        <span className="bg-primary py-2 px-4 rounded-lg tracking-widest text-white">
+          store
+        </span>
+      </h1>
+      <p className="mt-6 text-lg tracking-wide leading-8 max-w-2xl mx-auto text-muted-foreground">
+        Lorem ipsum dolor sit amet consectetur adipisicing elit. Vero hic
+        distinctio ducimus temporibus nobis autem laboriosam repellat, magni
+        fugiat minima excepturi neque, tenetur possimus nihil atque! Culpa nulla
+        labore nam?
+      </p>
+    </section>
+  );
+}
+export default AboutPage;
+```
+
+### Suspense Component
+
+- bcs the Hero component is static, doesn´t make sense to have a loadimng component
+  for all the components, but only for the ones where we are fetching. Note: do not
+  fetch anything here bcs it won't work the Suspense hook
+
+app/page.tsx
+
+```tsx
+import FeaturedProducts from "@/components/home/FeaturedProducts";
+import Hero from "@/components/home/Hero";
+import LoadingContainer from "@/components/global/LoadingContainer";
+import { Suspense } from "react";
+function HomPage() {
+  return (
+    <>
+      <Hero />
+      <Suspense fallback={<LoadingContainer />}>
+        <FeaturedProducts />
+      </Suspense>
+    </>
+  );
+}
+export default HomPage;
+```
+
+### LoadingContainer Component
+
+```tsx
+import { Skeleton } from "../ui/skeleton";
+import { Card, CardContent } from "../ui/card";
+
+function LoadingContainer() {
+  return (
+    <div className="pt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <LoadingProduct />
+      <LoadingProduct />
+      <LoadingProduct />
+    </div>
+  );
+}
+
+function LoadingProduct() {
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <Skeleton className="h-48 w-full" />
+        <Skeleton className="h-4 w-3/4 mt-4" />
+        <Skeleton className="h-4 w-1/4 mt-4" />
+      </CardContent>
+    </Card>
+  );
+}
+export default LoadingContainer;
+```

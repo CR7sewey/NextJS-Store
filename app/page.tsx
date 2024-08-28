@@ -2,11 +2,12 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Containers from "@/components/global/Containers";
 import { task, tasks } from "@/utils/actions";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Hero from "@/components/home/Hero";
 import FeaturedProducts from "@/components/home/FeaturedProducts";
 import SectionTitle from "@/components/global/SectionTitle";
 import EmptyList from "@/components/global/EmptyList";
+import LoadingContainer from "@/components/global/LoadingContainer";
 
 export default function Home() {
   /*const [inc, setInc] = useState(0);
@@ -33,7 +34,9 @@ export default function Home() {
   return (
     <>
       <Hero />
-      <FeaturedProducts />
+      <Suspense fallback={<LoadingContainer />}>
+        <FeaturedProducts />
+      </Suspense>
     </>
   );
 }
