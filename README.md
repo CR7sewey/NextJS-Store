@@ -1166,3 +1166,178 @@ function LoadingProduct() {
 }
 export default LoadingContainer;
 ```
+
+### Products Page - Loading
+
+- create app/products/loading.tsx
+
+```tsx
+"use client";
+
+import LoadingContainer from "@/components/global/LoadingContainer";
+
+function loading() {
+  return <LoadingContainer />;
+}
+export default loading;
+```
+
+### Products Page
+
+```tsx
+import ProductsContainer from "@/components/products/ProductsContainer";
+
+async function ProductsPage({
+  searchParams,
+}: {
+  searchParams: { layout?: string; search?: string };
+}) {
+  const layout = searchParams.layout || "grid";
+  const search = searchParams.search || "";
+  return (
+    <>
+      <ProductsContainer layout={layout} search={search} />
+    </>
+  );
+}
+export default ProductsPage;
+```
+
+### Products Page - Loading
+
+- create app/products/loading.tsx
+
+```tsx
+"use client";
+
+import LoadingContainer from "@/components/global/LoadingContainer";
+
+function loading() {
+  return <LoadingContainer />;
+}
+export default loading;
+```
+
+### ProductsContainer Component
+
+```tsx
+import ProductsGrid from "./ProductsGrid";
+import ProductsList from "./ProductsList";
+import { LuLayoutGrid, LuList } from "react-icons/lu";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { fetchAllProducts } from "@/utils/actions";
+import Link from "next/link";
+
+async function ProductsContainer({
+  layout,
+  search,
+}: {
+  layout: string;
+  search: string;
+}) {
+  const products = await fetchAllProducts();
+  const totalProducts = products.length;
+  const searchTerm = search ? `&search=${search}` : "";
+  return (
+    <>
+      {/* HEADER */}
+      <section>
+        <div className="flex justify-between items-center">
+          <h4 className="font-medium text-lg">
+            {totalProducts} product{totalProducts > 1 && "s"}
+          </h4>
+          <div className="flex gap-x-4">
+            <Button
+              variant={layout === "grid" ? "default" : "ghost"}
+              size="icon"
+              asChild
+            >
+              <Link href={`/products?layout=grid${searchTerm}`}>
+                <LuLayoutGrid />
+              </Link>
+            </Button>
+            <Button
+              variant={layout === "list" ? "default" : "ghost"}
+              size="icon"
+              asChild
+            >
+              <Link href={`/products?layout=list${searchTerm}`}>
+                <LuList />
+              </Link>
+            </Button>
+          </div>
+        </div>
+        <Separator className="mt-4" />
+      </section>
+      {/* PRODUCTS */}
+      <div>
+        {totalProducts === 0 ? (
+          <h5 className="text-2xl mt-16">
+            Sorry, no products matched your search...
+          </h5>
+        ) : layout === "grid" ? (
+          <ProductsGrid products={products} />
+        ) : (
+          <ProductsList products={products} />
+        )}
+      </div>
+    </>
+  );
+}
+export default ProductsContainer;
+```
+
+### ProductsList Component
+
+```tsx
+import { formatCurrency } from "@/utils/format";
+import Link from "next/link";
+import { Card, CardContent } from "@/components/ui/card";
+import { Product } from "@prisma/client";
+import Image from "next/image";
+import FavoriteToggleButton from "./FavoriteToggleButton";
+function ProductsList({ products }: { products: Product[] }) {
+  return (
+    <div className="mt-12 grid gap-y-8">
+      {products.map((product) => {
+        const { name, price, image, company } = product;
+        const dollarsAmount = formatCurrency(price);
+        const productId = product.id;
+        return (
+          <article key={productId} className="group relative">
+            <Link href={`/products/${productId}`}>
+              <Card className="transform group-hover:shadow-xl transition-shadow duration-500">
+                <CardContent className="p-8 gap-y-4 grid md:grid-cols-3">
+                  <div className="relative h-64  md:h-48 md:w-48">
+                    <Image
+                      src={image}
+                      alt={name}
+                      fill
+                      sizes="(max-width:768px) 100vw,(max-width:1200px) 50vw,33vw"
+                      priority
+                      className="w-full rounded-md object-cover"
+                    />
+                  </div>
+
+                  <div>
+                    <h2 className="text-xl font-semibold capitalize">{name}</h2>
+                    <h4 className="text-muted-foreground">{company}</h4>
+                  </div>
+                  <p className="text-muted-foreground text-lg md:ml-auto">
+                    {dollarsAmount}
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
+            <div className="absolute bottom-8 right-8 z-5">
+              <FavoriteToggleButton productId={productId} />
+            </div>
+          </article>
+        );
+      })}
+    </div>
+  );
+}
+export default ProductsList;
+```
