@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import Logo from "./Logo";
 import NavSearch from "./NavSearch";
 import CartButton from "./CartButton";
@@ -11,7 +11,9 @@ function Navbat() {
     <nav className="border-b ">
       <Containers className="flex flex-col sm:flex-row  sm:justify-between sm:items-center flex-wrap gap-4 py-8">
         <Logo />
-        <NavSearch />
+        <Suspense fallback={<h1>Searching option incoming...</h1>}>
+          <NavSearch />
+        </Suspense>
         <div className="flex gap-4 items-center ">
           <CartButton />
           <DarkMode />

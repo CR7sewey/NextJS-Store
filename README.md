@@ -1393,3 +1393,49 @@ function NavSearch() {
 }
 export default NavSearch;
 ```
+
+### Search Argument
+
+- refactor
+
+ProductsContainer.tsx
+
+```tsx
+const products = await fetchAllProducts({ search });
+```
+
+- actions
+
+```ts
+export const fetchAllProducts = ({ search = "" }: { search: string }) => {
+  return db.product.findMany({
+    where: {
+      OR: [
+        { name: { contains: search, mode: "insensitive" } },
+        { company: { contains: search, mode: "insensitive" } },
+      ],
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+};
+```
+
+### Wrap NavSearch in Suspense
+
+[useSearchParams Error](https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout)
+
+Navbar.tsx
+
+```tsx
+import { Suspense } from "react";
+
+return (
+  <>
+    <Suspense>
+      <NavSearch />
+    </Suspense>
+  </>
+);
+```

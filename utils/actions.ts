@@ -2,7 +2,7 @@
 
 import prisma from "./db";
 
-export const fetchAllProducts = async (searchParam: string) => {
+export const fetchAllProducts = async (searchParam: string = "") => {
   console.log(searchParam);
   if (searchParam) {
     const products = prisma.product.findMany({
@@ -10,13 +10,15 @@ export const fetchAllProducts = async (searchParam: string) => {
         createdAt: "desc",
       },
       where: {
-        name: {
-          contains: searchParam,
-        },
+        OR: [
+          { name: { contains: searchParam, mode: "insensitive" } },
+          { company: { contains: searchParam, mode: "insensitive" } },
+        ],
       },
     });
     return products;
   }
+
   const products = prisma.product.findMany({
     orderBy: {
       createdAt: "desc",
