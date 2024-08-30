@@ -1439,3 +1439,187 @@ return (
   </>
 );
 ```
+
+### Single Product / Single Product - Setup
+
+- actions.ts
+
+```ts
+import { redirect } from "next/navigation";
+
+export const fetchSingleProduct = async (productId: string) => {
+  const product = await db.product.findUnique({
+    where: {
+      id: productId,
+    },
+  });
+  if (!product) {
+    redirect("/products");
+  }
+  return product;
+};
+```
+
+### Single Product - Components
+
+- create components/single-product
+  - AddToCart
+  - BreadCrumbs
+  - ProductRating
+
+AddToCart.tsx
+
+```tsx
+import { Button } from "../ui/button";
+
+function AddToCart({ productId }: { productId: string }) {
+  return (
+    <Button className="capitalize mt-8" size="lg">
+      add to cart
+    </Button>
+  );
+}
+export default AddToCart;
+```
+
+BreadCrumbs.tsx
+
+```tsx
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+
+function BreadCrumbs({ name }: { name: string }) {
+  return (
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink href="/" className="capitalize text-lg">
+            home
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbLink href="/products" className="capitalize text-lg">
+            products
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage className="capitalize text-lg">{name}</BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+}
+export default BreadCrumbs;
+```
+
+ProductRating.tsx
+
+```tsx
+import { FaStar } from "react-icons/fa";
+
+async function ProductRating({ productId }: { productId: string }) {
+  const rating = 4.2;
+  const count = 25;
+
+  const className = `flex gap-1 items-center text-md mt-1 mb-4`;
+  const countValue = `(${count}) reviews`;
+  return (
+    <span className={className}>
+      <FaStar className="w-3 h-3" />
+      {rating} {countValue}
+    </span>
+  );
+}
+
+export default ProductRating;
+```
+
+### Single Product - Page
+
+- create app/products/[id]/page.tsx
+
+```tsx
+import BreadCrumbs from "@/components/single-product/BreadCrumbs";
+import { fetchSingleProduct } from "@/utils/actions";
+import Image from "next/image";
+import { formatCurrency } from "@/utils/format";
+import FavoriteToggleButton from "@/components/products/FavoriteToggleButton";
+import AddToCart from "@/components/single-product/AddToCart";
+import ProductRating from "@/components/single-product/ProductRating";
+async function SingleProductPage({ params }: { params: { id: string } }) {
+  const product = await fetchSingleProduct(params.id);
+  const { name, image, company, description, price } = product;
+  const dollarsAmount = formatCurrency(price);
+  return (
+    <section>
+      <BreadCrumbs name={product.name} />
+      <div className="mt-6 grid gap-y-8 lg:grid-cols-2 lg:gap-x-16">
+        {/* IMAGE FIRST COL */}
+        <div className="relative h-full">
+          <Image
+            src={image}
+            alt={name}
+            fill
+            sizes="(max-width:768px) 100vw,(max-width:1200px) 50vw,33vw"
+            priority
+            className="w-full rounded-md object-cover"
+          />
+        </div>
+        {/* PRODUCT INFO SECOND COL */}
+        <div>
+          <div className="flex gap-x-8 items-center">
+            <h1 className="capitalize text-3xl font-bold">{name}</h1>
+            <FavoriteToggleButton productId={params.id} />
+          </div>
+          <ProductRating productId={params.id} />
+          <h4 className="text-xl mt-2">{company}</h4>
+          <p className="mt-3 text-md bg-muted inline-block p-2 rounded-md">
+            {dollarsAmount}
+          </p>
+          <p className="mt-6 leading-8 text-muted-foreground">{description}</p>
+          <AddToCart productId={params.id} />
+        </div>
+      </div>
+    </section>
+  );
+}
+export default SingleProductPage;
+```
+
+### Deploy On Vercel
+
+- create vercel account
+  [Vercel](https://vercel.com)
+- create github repository
+- double check .gitignore
+- update package.json
+
+```json
+"scripts": {
+    "dev": "next dev",
+    "build": "npx prisma generate && next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+```
+
+- push it up to github
+
+```bash
+git init
+git add .
+git commit -m "first commit"
+```
+
+- deploy on vercel
+- setup env variables
