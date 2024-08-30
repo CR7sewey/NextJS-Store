@@ -1,7 +1,6 @@
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Containers from "@/components/global/Containers";
-import { task, tasks } from "@/utils/actions";
 import { Suspense, useEffect, useState } from "react";
 import Hero from "@/components/home/Hero";
 import FeaturedProducts from "@/components/home/FeaturedProducts";
