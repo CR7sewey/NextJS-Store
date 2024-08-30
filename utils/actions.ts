@@ -1,6 +1,7 @@
 "use server";
-
+import { Product } from "@prisma/client";
 import prisma from "./db";
+import { redirect } from "next/navigation";
 
 export const fetchAllProducts = async (searchParam: string = "") => {
   console.log(searchParam);
@@ -34,6 +35,18 @@ export const fetchFeaturedProducts = async () => {
     },
   });
   return products;
+};
+
+export const fetchProduct = async ({ id }: { id: string }) => {
+  const product: Product | null = await prisma.product.findUnique({
+    where: {
+      id,
+    },
+  });
+  if (!product) {
+    redirect("/products");
+  }
+  return product;
 };
 
 /*
