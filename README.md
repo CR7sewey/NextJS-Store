@@ -1623,3 +1623,123 @@ git commit -m "first commit"
 
 - deploy on vercel
 - setup env variables
+
+### Toast Component
+
+[Toast](https://ui.shadcn.com/docs/components/toast)
+
+providers.tsx
+
+```tsx
+"use client";
+import { ThemeProvider } from "./theme-provider";
+import { Toaster } from "@/components/ui/toaster";
+
+function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <>
+      <Toaster />
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange
+      >
+        {children}
+      </ThemeProvider>
+    </>
+  );
+}
+export default Providers;
+```
+
+### Clerk
+
+[Clerk Docs](https://clerk.com/)
+[Clerk + Next.js Setup](https://clerk.com/docs/quickstarts/nextjs)
+
+- create new application
+
+```sh
+npm install @clerk/nextjs
+```
+
+- create .env.local
+
+```bash
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
+CLERK_SECRET_KEY=
+```
+
+In Next.js, environment variables that start with NEXT*PUBLIC* are exposed to the browser. This means they can be accessed in your front-end code.
+
+For example, NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY can be used in both server-side and client-side code.
+
+On the other hand, CLERK_SECRET_KEY is a server-side environment variable. It's not exposed to the browser, making it suitable for storing sensitive data like API secrets.
+
+layout.tsx
+
+```tsx
+import { ClerkProvider } from "@clerk/nextjs";
+
+return (
+  <ClerkProvider>
+    <html lang="en" suppressHydrationWarning>
+      <body className={inter.className}>
+        <Providers>
+          <Navbar />
+          <Container className="py-20">{children}</Container>
+        </Providers>
+      </body>
+    </html>
+  </ClerkProvider>
+);
+```
+
+- create middleware.ts
+
+```ts
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+
+const isPublicRoute = createRouteMatcher(["/", "/products(.*)", "/about"]);
+
+export default clerkMiddleware((auth, req) => {
+  if (!isPublicRoute(req)) auth().protect();
+});
+
+export const config = {
+  matcher: ["/((?!.*\\..*|_next).*)", "/", "/(api|trpc)(.*)"],
+};
+```
+
+- restart dev server
+- clerck is storing all of the info in the cookies
+
+### SignUp/SignIn and Customize Avatar (optional)
+
+- customization
+  - avatars
+
+### SignOutButton Component
+
+```tsx
+"use client";
+import { SignOutButton } from "@clerk/nextjs";
+import { useToast } from "../ui/use-toast";
+import Link from "next/link";
+
+function SignOutLink() {
+  const { toast } = useToast();
+  const handleLogout = () => {
+    toast({ description: "Logging Out..." });
+  };
+  return (
+    <SignOutButton>
+      <Link href="/" className="w-full text-left" onClick={handleLogout}>
+        Logout
+      </Link>
+    </SignOutButton>
+  );
+}
+export default SignOutLink;
+```

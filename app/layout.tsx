@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbat from "@/components/navbar/Navbat";
-import NavSearch from "@/components/navbar/NavSearch";
-import CartButton from "@/components/navbar/CartButton";
+import { ClerkProvider } from "@clerk/nextjs";
 import Containers from "@/components/global/Containers";
 import Providers from "./providers";
 
@@ -20,13 +19,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
-        <Providers>
-          <Navbat />
-          <Containers className="py-20">{children}</Containers>
-        </Providers>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en" suppressHydrationWarning>
+        <body className={inter.className}>
+          <Providers>
+            <Navbat />
+            <Containers className="py-20">{children}</Containers>
+          </Providers>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

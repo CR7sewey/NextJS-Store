@@ -5,6 +5,7 @@ import CartButton from "./CartButton";
 import DarkMode from "./DarkMode";
 import LinksDropdown from "./LinksDropdown";
 import Containers from "../global/Containers";
+import SignOutLink from "./SignOutLink";
 
 function Navbat() {
   return (
@@ -15,6 +16,7 @@ function Navbat() {
           <NavSearch />
         </Suspense>
         <div className="flex gap-4 items-center ">
+          <SignOutLink />
           <CartButton />
           <DarkMode />
           <LinksDropdown />
