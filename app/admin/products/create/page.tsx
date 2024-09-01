@@ -9,6 +9,8 @@ import ImageInput from "@/components/form/ImageInput";
 import TextAreaInput from "@/components/form/TextAreaInput";
 import CheckBoxInput from "@/components/form/CheckBoxInput";
 import SubmitButton from "@/components/form/Buttons";
+import FormContainer from "@/components/form/FormContainer";
+import { createProduct } from "@/utils/actions";
 
 const handleSubmitServerAction = async (formData: FormData) => {
   "use server";
@@ -26,29 +28,33 @@ function page() {
     <section>
       <h1 className="text-2xl font-semibold mb-8 capitalize">create product</h1>{" "}
       <div className="border p-8 rounded-md">
-        <form action={handleSubmitServerAction}>
-          <FormInput
-            name="name"
-            type="text"
-            label="Product Name"
-            defaultValue={name}
-          />
-          <PriceInput />
-          <FormInput
-            name="company"
-            type="text"
-            label="Company"
-            defaultValue={company}
-          />
-          <ImageInput />
-          <TextAreaInput
-            name="description"
-            labelText="Product Description"
-            defaultValue={description}
-          />
+        <FormContainer action={createProduct}>
+          <div className="grid gap-4 md:grid-cols-2 my-4">
+            <FormInput
+              name="name"
+              type="text"
+              label="Product Name"
+              defaultValue={name}
+            />
+            <PriceInput />
+            <FormInput
+              name="company"
+              type="text"
+              label="Company"
+              defaultValue={company}
+            />
+            <ImageInput />
+
+            <TextAreaInput
+              name="description"
+              labelText="Product Description"
+              defaultValue={description}
+            />
+          </div>
+
           <CheckBoxInput name="featured" label="Featured" />
-          <SubmitButton className="mt-8" />
-        </form>
+          <SubmitButton text="Create Product" className="mt-8" />
+        </FormContainer>
       </div>
     </section>
   );
