@@ -16,7 +16,6 @@ function Navbat() {
           <NavSearch />
         </Suspense>
         <div className="flex gap-4 items-center ">
-          <SignOutLink />
           <CartButton />
           <DarkMode />
           <LinksDropdown />
