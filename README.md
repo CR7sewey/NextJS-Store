@@ -1823,3 +1823,156 @@ function LinksDropdown() {
 }
 export default LinksDropdown;
 ```
+
+### Admin Links
+
+- utils/links.ts
+
+```ts
+type NavLink = {
+  href: string;
+  label: string;
+};
+
+export const links: NavLink[] = [
+  { href: "/", label: "home" },
+  { href: "/about", label: "about" },
+  { href: "/products", label: "products" },
+  { href: "/favorites", label: "favorites" },
+  { href: "/cart", label: "cart" },
+  { href: "/orders", label: "orders" },
+  { href: "/admin/sales", label: "dashboard" },
+];
+
+export const adminLinks: NavLink[] = [
+  { href: "/admin/sales", label: "sales" },
+  { href: "/admin/products", label: "my products" },
+  { href: "/admin/products/create", label: "create product" },
+];
+```
+
+### Admin Pages
+
+- remove existing page.tsx
+
+- admin
+  - products
+    - [id]/edit/page.tsx
+    - create/page.tsx
+    - page.tsx
+  - sales/page.tsx
+  - layout.tsx
+  - Sidebar.tsx
+
+Sidebar.tsx
+
+```tsx
+"use client";
+import { adminLinks } from "@/utils/links";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Button } from "@/components/ui/button";
+
+function Sidebar() {
+  const pathname = usePathname();
+
+  return (
+    <aside>
+      {adminLinks.map((link) => {
+        const isActivePage = pathname === link.href;
+        const variant = isActivePage ? "default" : "ghost";
+        return (
+          <Button
+            asChild
+            className="w-full mb-2 capitalize font-normal justify-start"
+            variant={variant}
+          >
+            <Link key={link.href} href={link.href}>
+              {link.label}
+            </Link>
+          </Button>
+        );
+      })}
+    </aside>
+  );
+}
+export default Sidebar;
+```
+
+layout.tsx
+
+```tsx
+import { Separator } from "@/components/ui/separator";
+import Sidebar from "./Sidebar";
+
+function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <>
+      <h2 className="text-2xl pl-4">Dashboard</h2>
+      <Separator className="mt-2" />
+      <section className="grid lg:grid-cols-12 gap-12 mt-12">
+        <div className="lg:col-span-2">
+          <Sidebar />
+        </div>
+        <div className="lg:col-span-10 px-4">{children}</div>
+      </section>
+    </>
+  );
+}
+export default DashboardLayout;
+```
+
+### Restrict Access - Middleware
+
+```ts
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
+
+const isPublicRoute = createRouteMatcher(["/", "/products(.*)", "/about"]);
+const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
+
+export default clerkMiddleware(async (auth, req) => {
+  // console.log(auth().userId);
+
+  const isAdminUser = auth().userId === process.env.ADMIN_USER_ID;
+
+  if (isAdminRoute(req) && !isAdminUser) {
+    return NextResponse.redirect(new URL("/", req.url));
+  }
+  if (!isPublicRoute(req)) auth().protect();
+});
+
+export const config = {
+  matcher: ["/((?!.*\\..*|_next).*)", "/", "/(api|trpc)(.*)"],
+};
+```
+
+- add userId to .env
+
+```sh
+ADMIN_USER_ID=
+```
+
+### Restrict Access - LinksDropdown
+
+```tsx
+import { auth } from "@clerk/nextjs/server";
+function LinksDropdown() {
+  const { userId } = auth();
+  const isAdmin = userId === process.env.ADMIN_USER_ID;
+  return (
+    <>
+      {links.map((link) => {
+        if (link.label === "dashboard" && !isAdmin) return null;
+        return (
+          <DropdownMenuItem key={link.href}>
+            <Link href={link.href} className="capitalize w-full">
+              {link.label}
+            </Link>
+          </DropdownMenuItem>
+        );
+      })}
+    </>
+  );
+}
+```

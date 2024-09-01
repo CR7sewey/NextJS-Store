@@ -1,10 +1,16 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
 const isPublicRoute = createRouteMatcher(["/", "/products(.*)", "/about"]);
+const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
 
 // checa se é public ou nao. se nao, tem de ter autentificacao
 // invoked for every route
-export default clerkMiddleware((auth, req) => {
+export default clerkMiddleware(async (auth, req) => {
+  const isAdminUser = auth().userId === process.env.ADMIN_USER_ID;
+  if (isAdminRoute(req) && !isAdminUser) {
+    return NextResponse.redirect(new URL("/", req.url));
+  }
   if (!isPublicRoute(req)) auth().protect();
 });
 
