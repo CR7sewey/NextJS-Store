@@ -8,6 +8,7 @@ import PriceInput from "@/components/form/PriceInput";
 import ImageInput from "@/components/form/ImageInput";
 import TextAreaInput from "@/components/form/TextAreaInput";
 import CheckBoxInput from "@/components/form/CheckBoxInput";
+import SubmitButton from "@/components/form/Buttons";
 
 const handleSubmitServerAction = async (formData: FormData) => {
   "use server";
@@ -46,9 +47,7 @@ function page() {
             defaultValue={description}
           />
           <CheckBoxInput name="featured" label="Featured" />
-          <Button type="submit" size="lg">
-            Submit
-          </Button>
+          <SubmitButton className="mt-8" />
         </form>
       </div>
     </section>
