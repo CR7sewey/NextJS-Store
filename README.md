@@ -2043,3 +2043,160 @@ export default CreateProductPage;
   - ImageInputContainer
   - PriceInput
   - TextAreaInput
+
+FormInput.tsx
+
+```tsx
+import { Label } from "../ui/label";
+import { Input } from "../ui/input";
+
+type FormInputProps = {
+  name: string;
+  type: string;
+  label?: string;
+  defaultValue?: string;
+  placeholder?: string;
+};
+
+function FormInput({
+  label,
+  name,
+  type,
+  defaultValue,
+  placeholder,
+}: FormInputProps) {
+  return (
+    <div className="mb-2">
+      <Label htmlFor={name} className="capitalize">
+        {label || name}
+      </Label>
+      <Input
+        id={name}
+        name={name}
+        type={type}
+        defaultValue={defaultValue}
+        placeholder={placeholder}
+        required
+      />
+    </div>
+  );
+}
+
+export default FormInput;
+```
+
+### PriceInput Component
+
+```tsx
+import { Label } from "../ui/label";
+import { Input } from "../ui/input";
+
+const name = "price";
+type FormInputNumberProps = {
+  defaultValue?: number;
+};
+
+function PriceInput({ defaultValue }: FormInputNumberProps) {
+  return (
+    <div className="mb-2">
+      <Label htmlFor="price" className="capitalize">
+        Price ($)
+      </Label>
+      <Input
+        id={name}
+        type="number"
+        name={name}
+        min={0}
+        defaultValue={defaultValue || 100}
+        required
+      />
+    </div>
+  );
+}
+export default PriceInput;
+```
+
+### ImageInput Component
+
+```tsx
+import { Label } from "../ui/label";
+import { Input } from "../ui/input";
+
+function ImageInput() {
+  const name = "image";
+  return (
+    <div className="mb-2">
+      <Label htmlFor={name} className="capitalize">
+        Image
+      </Label>
+      <Input id={name} name={name} type="file" required accept="image/*" />
+    </div>
+  );
+}
+export default ImageInput;
+```
+
+### TextAreaInput Component
+
+```tsx
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+
+type TextAreaInputProps = {
+  name: string;
+  labelText?: string;
+  defaultValue?: string;
+};
+
+function TextAreaInput({ name, labelText, defaultValue }: TextAreaInputProps) {
+  return (
+    <div className="mb-2">
+      <Label htmlFor={name} className="capitalize">
+        {labelText || name}
+      </Label>
+      <Textarea
+        id={name}
+        name={name}
+        defaultValue={defaultValue}
+        rows={5}
+        required
+        className="leading-loose"
+      />
+    </div>
+  );
+}
+
+export default TextAreaInput;
+```
+
+### CheckBoxInput Component
+
+```tsx
+"use client";
+
+import { Checkbox } from "@/components/ui/checkbox";
+
+type CheckboxInputProps = {
+  name: string;
+  label: string;
+  defaultChecked?: boolean;
+};
+
+export default function CheckboxInput({
+  name,
+  label,
+  defaultChecked = false,
+}: CheckboxInputProps) {
+  return (
+    <div className="flex items-center space-x-2">
+      <Checkbox id={name} name={name} defaultChecked={defaultChecked} />
+      <label
+        htmlFor={name}
+        className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 capitalize"
+      >
+        {label}
+      </label>
+    </div>
+  );
+}
+```

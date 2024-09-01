@@ -3,6 +3,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import React from "react";
 import { faker } from "@faker-js/faker";
+import FormInput from "@/components/form/FormInput";
+import PriceInput from "@/components/form/PriceInput";
+import ImageInput from "@/components/form/ImageInput";
+import TextAreaInput from "@/components/form/TextAreaInput";
+import CheckBoxInput from "@/components/form/CheckBoxInput";
 
 const handleSubmitServerAction = async (formData: FormData) => {
   "use server";
@@ -21,10 +26,26 @@ function page() {
       <h1 className="text-2xl font-semibold mb-8 capitalize">create product</h1>{" "}
       <div className="border p-8 rounded-md">
         <form action={handleSubmitServerAction}>
-          <div className="mb-2">
-            <Label htmlFor="name">Product Name</Label>
-            <Input type="text" id="name" name="name" defaultValue={name} />
-          </div>
+          <FormInput
+            name="name"
+            type="text"
+            label="Product Name"
+            defaultValue={name}
+          />
+          <PriceInput />
+          <FormInput
+            name="company"
+            type="text"
+            label="Company"
+            defaultValue={company}
+          />
+          <ImageInput />
+          <TextAreaInput
+            name="description"
+            labelText="Product Description"
+            defaultValue={description}
+          />
+          <CheckBoxInput name="featured" label="Featured" />
           <Button type="submit" size="lg">
             Submit
           </Button>
