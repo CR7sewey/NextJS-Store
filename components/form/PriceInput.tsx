@@ -12,12 +12,12 @@ type FormInputNumberProps = {
 function PriceInput({
   label,
   defaultValue,
-  name = "Price ($)",
+  name = "price",
 }: FormInputNumberProps) {
   return (
     <div className="mb-2">
       <Label htmlFor={name} className="capitalize">
-        {label ? label : name}
+        {label ? label : name} ($)
       </Label>
       <Input
         type="number"

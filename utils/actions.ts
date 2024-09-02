@@ -51,39 +51,36 @@ export const fetchProduct = async ({ id }: { id: string }) => {
   return product;
 };
 
+// first approach
 export const createProduct = async (
   prevState: any,
   formData: FormData
 ): Promise<{ message: string }> => {
-  console.log(Object.fromEntries(formData), (await getAuthUser()).username);
-  return { message: "product created" };
-  /*
-  await new Promise((resolve, reject) => {
-    // just a delay to see the effect
-    setTimeout(resolve, 3000); // needs to be in a Promeise to affect (time) the follwoing Promises (await)
-  });
-  const firstName = formData.get("firstName") as string;
-  const lastName = formData.get("lastName") as string;
-  //const rawData = Object.fromEntries(formData); // hte usual aproach
-  const newUser: User = {
-    id: Date.now().toString(),
-    firstName,
-    lastName,
-  };
-  console.log("aqui!!", firstName, lastName);
-
+  const user = await getAuthUser();
+  const rawData = Object.fromEntries(formData);
   try {
-    await saveUsers(newUser);
-    revalidatePath("/actions");
-    //throw Error("erro");
-    // redirect('/') trigger an error
-    return "user created successfully...";
+    const name = rawData.name as string;
+    const company = rawData.company as string;
+    const image = rawData.image as File;
+    const description = rawData.description as string;
+    const featured = Boolean(rawData.featured as string);
+    const price = parseInt(rawData.price as string);
+    console.log(price);
+    await prisma.product.create({
+      data: {
+        name,
+        company,
+        description,
+        featured,
+        price,
+        image: `/images/${image.name}`,
+        clerkId: user.id,
+      },
+    });
+    return { message: "product created" };
   } catch (e) {
-    console.log(e);
-    return "failed to create user...";
+    return renderError(e);
   }
-  //revalidatePath("/actions");
-  //redirect("/"); // navigate back to the home page, dont place it in try and catch*/
 };
 
 // HELPER FUNCTIONS
