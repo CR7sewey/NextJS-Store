@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { actionFunction } from "./types";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { z } from "zod";
-import { productSchema, validateWithZodSchema } from "./schemas";
+import { imageSchema, productSchema, validateWithZodSchema } from "./schemas";
 import { error } from "console";
 
 export const fetchAllProducts = async (searchParam: string = "") => {
@@ -69,6 +69,7 @@ export const createProduct = async (
       throw new Error(errors.join(", "));
     }*/
     const result = validateWithZodSchema(productSchema, rawData);
+    const image = validateWithZodSchema(imageSchema, { image: rawData?.image });
 
     /*
     const name = rawData.name as string;
@@ -81,7 +82,7 @@ export const createProduct = async (
     await prisma.product.create({
       data: {
         ...result,
-        image: `/images/${(rawData.image as File).name}`,
+        image: `/images/${(image.image as File).name}`,
         clerkId: user.id,
       },
     });

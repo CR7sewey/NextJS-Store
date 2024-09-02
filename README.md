@@ -2594,3 +2594,49 @@ try {
     return { message: 'product created' };
   }
 ```
+
+### Image Upload
+
+schemas.ts
+
+```ts
+export const imageSchema = z.object({
+  image: validateImageFile(),
+});
+
+function validateImageFile() {
+  const maxUploadSize = 1024 * 1024;
+  const acceptedFileTypes = ["image/"];
+  return z
+    .instanceof(File)
+    .refine((file) => {
+      return !file || file.size <= maxUploadSize;
+    }, `File size must be less than 1 MB`)
+    .refine((file) => {
+      return (
+        !file || acceptedFileTypes.some((type) => file.type.startsWith(type))
+      );
+    }, "File must be an image");
+}
+```
+
+actions.ts
+
+```ts
+try {
+    const rawData = Object.fromEntries(formData);
+    const file = formData.get('image') as File;
+    const validatedFields = validateWithZodSchema(productSchema, rawData);
+    const validatedFile = validateWithZodSchema(imageSchema, { image: file });
+    console.log(validatedFile);
+
+    await db.product.create({
+      data: {
+        ...validatedFields,
+        image: '/images/product-1.jpg',
+        clerkId: user.id,
+      },
+    });
+    return { message: 'product created' };
+  }
+```
