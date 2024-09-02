@@ -2451,3 +2451,146 @@ export const createProductAction = async (
 - lots of code code just to access input values
 - no validation (only html one)
 - image loader
+
+### Zod
+
+Zod is a JavaScript library for building schemas and validating data, providing type safety and error handling.
+
+```sh
+npm install zod
+```
+
+[Docs](https://zod.dev/?id=basic-usage)
+
+- setup utils/schemas.ts
+
+```ts
+import { z, ZodSchema } from "zod";
+
+export const productSchema = z.object({
+  name: z.string().min(4),
+  company: z.string().min(4),
+  price: z.coerce.number().int().min(0),
+  description: z.string(),
+  featured: z.coerce.boolean(),
+});
+```
+
+- actions.ts
+
+```ts
+export const createProductAction = async (
+  prevState: any,
+  formData: FormData
+): Promise<{ message: string }> => {
+  const user = await getAuthUser();
+
+  try {
+    const rawData = Object.fromEntries(formData);
+    const validatedFields = productSchema.parse(rawData);
+
+    await db.product.create({
+      data: {
+        ...validatedFields,
+        image: "/images/product-1.jpg",
+        clerkId: user.id,
+      },
+    });
+    return { message: "product created" };
+  } catch (error) {
+    return renderError(error);
+  }
+};
+```
+
+### Problem
+
+- error messages are not user friendly
+
+schemas.ts
+
+```ts
+import { z, ZodSchema } from "zod";
+
+export const productSchema = z.object({
+  name: z
+    .string()
+    .min(2, {
+      message: "name must be at least 2 characters.",
+    })
+    .max(100, {
+      message: "name must be less than 100 characters.",
+    }),
+  company: z.string(),
+  featured: z.coerce.boolean(),
+  price: z.coerce.number().int().min(0, {
+    message: "price must be a positive number.",
+  }),
+  description: z.string().refine(
+    (description) => {
+      const wordCount = description.split(" ").length;
+      return wordCount >= 10 && wordCount <= 1000;
+    },
+    {
+      message: "description must be between 10 and 1000 words.",
+    }
+  ),
+});
+```
+
+```ts
+try {
+    const rawData = Object.fromEntries(formData);
+    const validatedFields = productSchema.safeParse(rawData);
+
+    if (!validatedFields.success) {
+      const errors = validatedFields.error.errors.map((error) => error.message);
+      throw new Error(errors.join(','));
+    }
+
+    await db.product.create({
+      data: {
+        ...validatedFields.data,
+        image: '/images/product-1.jpg',
+        clerkId: user.id,
+      },
+    });
+    return { message: 'product created' };
+  }
+```
+
+### ValidateWithZodSchema
+
+schemas.ts
+
+```ts
+export function validateWithZodSchema<T>(
+  schema: ZodSchema<T>,
+  data: unknown
+): T {
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    const errors = result.error.errors.map((error) => error.message);
+    throw new Error(errors.join(", "));
+  }
+  return result.data;
+}
+```
+
+actions.ts
+
+```ts
+try {
+    const rawData = Object.fromEntries(formData);
+    const validatedFields = validateWithZodSchema(productSchema, rawData);
+
+    await db.product.create({
+      data: {
+        ...validatedFields,
+        image: '/images/product-1.jpg',
+        clerkId: user.id,
+      },
+    });
+    return { message: 'product created' };
+  }
+```
