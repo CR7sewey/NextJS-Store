@@ -7,6 +7,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { imageSchema, productSchema, validateWithZodSchema } from "./schemas";
 import { error } from "console";
+import { uploadImage } from "./supabase";
 
 export const fetchAllProducts = async (searchParam: string = "") => {
   console.log(searchParam);
@@ -59,7 +60,7 @@ export const createProduct = async (
   prevState: any,
   formData: FormData
 ): Promise<{ message: string }> => {
-  const user = await getAuthUser();
+  const user = await getAdminUser();
   const rawData = Object.fromEntries(formData);
 
   try {
@@ -68,8 +69,12 @@ export const createProduct = async (
       const errors = result.error.errors.map((error) => error.message);
       throw new Error(errors.join(", "));
     }*/
+    const img = rawData.image as File;
     const result = validateWithZodSchema(productSchema, rawData);
-    const image = validateWithZodSchema(imageSchema, { image: rawData?.image });
+    const image = validateWithZodSchema(imageSchema, { image: img });
+
+    const imageSupabase = await uploadImage(img);
+    console.log(imageSupabase, "supa");
 
     /*
     const name = rawData.name as string;
@@ -82,7 +87,7 @@ export const createProduct = async (
     await prisma.product.create({
       data: {
         ...result,
-        image: `/images/${(image.image as File).name}`,
+        image: imageSupabase,
         clerkId: user.id,
       },
     });
@@ -90,6 +95,16 @@ export const createProduct = async (
   } catch (e) {
     return renderError(e);
   }
+};
+
+export const fetchAdminProducts = async () => {
+  await getAdminUser();
+  const products = await prisma.product.findMany({
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+  return products;
 };
 
 // HELPER FUNCTIONS
@@ -104,6 +119,16 @@ const getAuthUser = async () => {
   const user = await currentUser();
   if (!user) {
     throw new Error("You must be logged in to access this route...!");
+  }
+  return user;
+};
+
+const getAdminUser = async () => {
+  const user = await getAuthUser();
+  if (user.id !== process.env.ADMIN_USER_ID) {
+    throw new Error(
+      "You must be logged in as an admin to access this route...!"
+    );
   }
   return user;
 };

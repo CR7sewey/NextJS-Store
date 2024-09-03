@@ -2640,3 +2640,123 @@ try {
     return { message: 'product created' };
   }
 ```
+
+### Create Bucket, Setup Policy and API Keys
+
+```env
+SUPABASE_URL=
+SUPABASE_KEY=
+```
+
+### Setup Supabase
+
+```sh
+npm install @supabase/supabase-js
+```
+
+utils/supabase.ts
+
+```ts
+import { createClient } from "@supabase/supabase-js";
+
+const bucket = "your-bucket-name";
+
+// Create a single supabase client for interacting with your database
+export const supabase = createClient(
+  process.env.SUPABASE_URL as string,
+  process.env.SUPABASE_KEY as string
+);
+
+export const uploadImage = async (image: File) => {
+  const timestamp = Date.now();
+  // const newName = `/users/${timestamp}-${image.name}`;
+  const newName = `${timestamp}-${image.name}`;
+
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .upload(newName, image, {
+      cacheControl: "3600",
+    });
+  if (!data) throw new Error("Image upload failed");
+  return supabase.storage.from(bucket).getPublicUrl(newName).data.publicUrl;
+};
+```
+
+### Create Product Action - Complete
+
+- actions.ts
+
+```ts
+export const createProductAction = async (
+  prevState: any,
+  formData: FormData
+): Promise<{ message: string }> => {
+  const user = await getAuthUser();
+
+  try {
+    const rawData = Object.fromEntries(formData);
+    const file = formData.get("image") as File;
+    const validatedFields = validateWithZodSchema(productSchema, rawData);
+    const validatedFile = validateWithZodSchema(imageSchema, { image: file });
+    const fullPath = await uploadImage(validatedFile.image);
+
+    await db.product.create({
+      data: {
+        ...validatedFields,
+        image: fullPath,
+        clerkId: user.id,
+      },
+    });
+  } catch (error) {
+    return renderError(error);
+  }
+  redirect("/admin/products");
+};
+```
+
+- add supabase url to remote patterns
+
+next.config.mjs
+
+```tsx
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "images.pexels.com",
+      },
+      {
+        protocol: "https",
+        hostname: "pldbjxhkrlailuixuvhz.supabase.co",
+      },
+    ],
+  },
+};
+
+export default nextConfig;
+```
+
+### Fetch Products - Admin
+
+- actions.ts
+
+```ts
+const getAdminUser = async () => {
+  const user = await getAuthUser();
+  if (user.id !== process.env.ADMIN_USER_ID) redirect("/");
+  return user;
+};
+// refactor createProductAction
+
+export const fetchAdminProducts = async () => {
+  await getAdminUser();
+  const products = await db.product.findMany({
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+  return products;
+};
+```
