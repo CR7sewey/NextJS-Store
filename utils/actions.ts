@@ -8,6 +8,7 @@ import { z } from "zod";
 import { imageSchema, productSchema, validateWithZodSchema } from "./schemas";
 import { error } from "console";
 import { uploadImage } from "./supabase";
+import { revalidatePath } from "next/cache";
 
 export const fetchAllProducts = async (searchParam: string = "") => {
   console.log(searchParam);
@@ -105,6 +106,24 @@ export const fetchAdminProducts = async () => {
     },
   });
   return products;
+};
+
+export const deleteProduct = async (prevState: { id: string }) => {
+  const productId = prevState.id;
+  console.log("AQUI", productId);
+  await getAdminUser();
+  try {
+    await prisma.product.delete({
+      where: {
+        id: productId,
+      },
+    });
+    console.log("OOOOOOO");
+    revalidatePath("/admin/products");
+    return { message: "product removed" };
+  } catch (e) {
+    return renderError(e);
+  }
 };
 
 // HELPER FUNCTIONS
