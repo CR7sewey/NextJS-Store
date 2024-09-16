@@ -127,6 +127,76 @@ export const deleteProduct = async (prevState: { id: string }) => {
   }
 };
 
+// TODO
+export const fetchAdminProductDetails = async (productId: string) => {
+  await getAdminUser();
+  const product = await prisma.product.findUnique({
+    where: {
+      id: productId,
+    },
+  });
+  if (!product) redirect("/admin/products");
+  return product;
+};
+
+// TODO
+export const updateProductAction = async (
+  prevState: any,
+  formData: FormData
+) => {
+  const user = await getAdminUser();
+  const rawData = Object.fromEntries(formData);
+  console.log(rawData);
+  try {
+    const result = validateWithZodSchema(productSchema, rawData);
+
+    const product = await fetchProduct({ id: rawData.id as string });
+    const product_intersection = { ...product, ...result };
+
+    await prisma.product.update({
+      where: {
+        id: rawData.id as string,
+      },
+      data: {
+        ...product_intersection,
+      },
+    });
+    revalidatePath(`/admin/products/${rawData.id as string}/edit`);
+    return { message: "Product updated successfully" };
+  } catch (e) {
+    return renderError(e);
+  }
+};
+
+// TODO
+export const updateProductImageAction = async (
+  prevState: any,
+  formData: FormData
+) => {
+  const user = await getAdminUser();
+  const rawData = Object.fromEntries(formData);
+  console.log(rawData);
+  try {
+    const img = rawData.image as File;
+    const image = validateWithZodSchema(imageSchema, { image: img });
+    const imageSupabase = await uploadImage(img);
+
+    await prisma.product.update({
+      where: {
+        id: rawData.id as string,
+      },
+      data: {
+        image: imageSupabase,
+      },
+    });
+
+    revalidatePath(`/admin/products/${rawData.id as string}/edit`);
+    return { message: "Product Image updated successfully" };
+  } catch (e) {
+    return renderError(e);
+  }
+};
+
 // HELPER FUNCTIONS
 
 const renderError = (error: unknown): { message: string } => {

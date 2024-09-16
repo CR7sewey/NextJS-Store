@@ -2945,3 +2945,234 @@ export const deleteProductAction = async (prevState: { productId: string }) => {
   }
 };
 ```
+
+### FetchAdminProductDetails, UpdateProductAction and updateProductImageAction
+
+- actions.ts
+
+```ts
+export const fetchAdminProductDetails = async (productId: string) => {
+  await getAdminUser();
+  const product = await db.product.findUnique({
+    where: {
+      id: productId,
+    },
+  });
+  if (!product) redirect("/admin/products");
+  return product;
+};
+
+export const updateProductAction = async (
+  prevState: any,
+  formData: FormData
+) => {
+  return { message: "Product updated successfully" };
+};
+export const updateProductImageAction = async (
+  prevState: any,
+  formData: FormData
+) => {
+  return { message: "Product Image updated successfully" };
+};
+```
+
+### Edit Product Page
+
+- app/admin/products/[id]/edit/page.tsx
+
+```tsx
+import { fetchAdminProductDetails, updateProductAction } from "@/utils/actions";
+import FormContainer from "@/components/form/FormContainer";
+import FormInput from "@/components/form/FormInput";
+import PriceInput from "@/components/form/PriceInput";
+import TextAreaInput from "@/components/form/TextAreaInput";
+import { SubmitButton } from "@/components/form/Buttons";
+import CheckboxInput from "@/components/form/CheckboxInput";
+async function EditProductPage({ params }: { params: { id: string } }) {
+  const { id } = params;
+  const product = await fetchAdminProductDetails(id);
+  const { name, company, description, featured, price } = product;
+  return (
+    <section>
+      <h1 className="text-2xl font-semibold mb-8 capitalize">update product</h1>
+      <div className="border p-8 rounded-md">
+        {/* Image Input Container */}
+        <FormContainer action={updateProductAction}>
+          <div className="grid gap-4 md:grid-cols-2 my-4">
+            <input type="hidden" name="id" value={id} />
+            <FormInput
+              type="text"
+              name="name"
+              label="product name"
+              defaultValue={name}
+            />
+            <FormInput
+              type="text"
+              name="company"
+              label="company"
+              defaultValue={company}
+            />
+
+            <PriceInput defaultValue={price} />
+          </div>
+          <TextAreaInput
+            name="description"
+            labelText="product description"
+            defaultValue={description}
+          />
+          <div className="mt-6">
+            <CheckboxInput
+              name="featured"
+              label="featured"
+              defaultChecked={featured}
+            />
+          </div>
+          <SubmitButton text="update product" className="mt-8" />
+        </FormContainer>
+      </div>
+    </section>
+  );
+}
+export default EditProductPage;
+```
+
+### UpdateProductAction
+
+actions.ts
+
+```ts
+export const updateProductAction = async (
+  prevState: any,
+  formData: FormData
+) => {
+  await getAdminUser();
+  try {
+    const productId = formData.get("id") as string;
+    const rawData = Object.fromEntries(formData);
+
+    const validatedFields = validateWithZodSchema(productSchema, rawData);
+
+    await db.product.update({
+      where: {
+        id: productId,
+      },
+      data: {
+        ...validatedFields,
+      },
+    });
+    revalidatePath(`/admin/products/${productId}/edit`);
+    return { message: "Product updated successfully" };
+  } catch (error) {
+    return renderError(error);
+  }
+};
+```
+
+### UpdateImageContainer Component
+
+```tsx
+"use client";
+import { useState } from "react";
+import Image from "next/image";
+import { Button } from "../ui/button";
+import FormContainer from "./FormContainer";
+import ImageInput from "./ImageInput";
+import { SubmitButton } from "./Buttons";
+import { type actionFunction } from "@/utils/types";
+
+type ImageInputContainerProps = {
+  image: string;
+  name: string;
+  action: actionFunction;
+  text: string;
+  children?: React.ReactNode;
+};
+
+function ImageInputContainer(props: ImageInputContainerProps) {
+  const { image, name, action, text } = props;
+  const [isUpdateFormVisible, setUpdateFormVisible] = useState(false);
+
+  return (
+    <div className="mb-8">
+      <Imagei
+        src={image}
+        width={200}
+        height={200}
+        className="rounded-md object-cover mb-4 w-[200px] h-[200px]"
+        alt={name}
+      />
+
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setUpdateFormVisible((prev) => !prev)}
+      >
+        {text}
+      </Button>
+      {isUpdateFormVisible && (
+        <div className="max-w-md mt-4">
+          <FormContainer action={action}>
+            {props.children}
+            <ImageInput />
+            <SubmitButton size="sm" />
+          </FormContainer>
+        </div>
+      )}
+    </div>
+  );
+}
+export default ImageInputContainer;
+```
+
+EditProductPage.tsx
+
+```tsx
+return (
+  <div className="border p-8 rounded-md">
+    {/* Image Input Container */}
+    <ImageInputContainer
+      action={updateProductImageAction}
+      name={name}
+      image={product.image}
+      text="update image"
+    >
+      <input type="hidden" name="id" value={id} />
+      <input type="hidden" name="url" value={product.image} />
+    </ImageInputContainer>
+  </div>
+);
+```
+
+### UpdateProductImageAction
+
+- actions.ts
+
+```ts
+export const updateProductImageAction = async (
+  prevState: any,
+  formData: FormData
+) => {
+  await getAuthUser();
+  try {
+    const image = formData.get("image") as File;
+    const productId = formData.get("id") as string;
+    const oldImageUrl = formData.get("url") as string;
+
+    const validatedFile = validateWithZodSchema(imageSchema, { image });
+    const fullPath = await uploadImage(validatedFile.image);
+    await deleteImage(oldImageUrl);
+    await db.product.update({
+      where: {
+        id: productId,
+      },
+      data: {
+        image: fullPath,
+      },
+    });
+    revalidatePath(`/admin/products/${productId}/edit`);
+    return { message: "Product Image updated successfully" };
+  } catch (error) {
+    return renderError(error);
+  }
+};
+```
