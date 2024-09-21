@@ -3176,3 +3176,61 @@ export const updateProductImageAction = async (
   }
 };
 ```
+
+### LoadingTable
+
+- create components/global/LoadingTable.tsx
+
+```tsx
+import { Skeleton } from "../ui/skeleton";
+
+function LoadingTable({ rows = 5 }: { rows?: number }) {
+  const tableRows = Array.from({ length: rows }, (_, index) => {
+    return (
+      <div className="mb-4" key={index}>
+        <Skeleton className="w-full h-8 rounded" />
+      </div>
+    );
+  });
+  return <>{tableRows}</>;
+}
+export default LoadingTable;
+```
+
+- create admin/products/loading.tsx
+
+```tsx
+"use client";
+
+import LoadingTable from "@/components/global/LoadingTable";
+
+function loading() {
+  return <LoadingTable />;
+}
+export default loading;
+```
+
+### Favorite Model
+
+- https://www.prisma.io/docs/orm/prisma-schema/data-model/models
+
+```prisma
+model Product {
+favorites Favorite[]
+}
+
+model Favorite {
+  id        String   @id @default(uuid())
+  clerkId  String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+```
+
+```sh
+npx prisma db push
+```
+
+- restart server
