@@ -9,6 +9,7 @@ import { imageSchema, productSchema, validateWithZodSchema } from "./schemas";
 import { error } from "console";
 import { deleteImage, uploadImage } from "./supabase";
 import { revalidatePath } from "next/cache";
+import { rejects } from "assert";
 
 export const fetchAllProducts = async (searchParam: string = "") => {
   console.log(searchParam);
@@ -100,6 +101,7 @@ export const createProduct = async (
 
 export const fetchAdminProducts = async () => {
   await getAdminUser();
+  await new Promise((resolve, reject) => setTimeout(resolve, 3000));
   const products = await prisma.product.findMany({
     orderBy: {
       createdAt: "desc",
@@ -180,7 +182,8 @@ export const updateProductImageAction = async (
     const img = rawData.image as File;
     const image = validateWithZodSchema(imageSchema, { image: img });
     const imageSupabase = await uploadImage(img);
-
+    const oldImage = rawData.url as string;
+    await deleteImage({ url: oldImage });
     await prisma.product.update({
       where: {
         id: rawData.id as string,
