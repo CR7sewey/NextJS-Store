@@ -200,6 +200,28 @@ export const updateProductImageAction = async (
   }
 };
 
+export const fetchFavoriteId = async ({ productId }: { productId: string }) => {
+  const user = await getAuthUser();
+  try {
+    const favorites = await prisma.favorites.findFirst({
+      where: {
+        clerkId: user.id,
+        productId,
+      },
+      select: {
+        id: true,
+      },
+    });
+    return favorites?.id || null;
+  } catch (e) {
+    renderError(e);
+  }
+};
+
+export const toggleFavoriteAction = async () => {
+  return { message: "toggle favorite action" };
+};
+
 // HELPER FUNCTIONS
 
 const renderError = (error: unknown): { message: string } => {
