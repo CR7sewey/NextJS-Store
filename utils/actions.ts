@@ -218,8 +218,65 @@ export const fetchFavoriteId = async ({ productId }: { productId: string }) => {
   }
 };
 
-export const toggleFavoriteAction = async () => {
-  return { message: "toggle favorite action" };
+export const toggleFavoriteAction = async (prevState: {
+  productId: string;
+  isFavorite: string | null | undefined;
+  pathname: string;
+}) => {
+  const user = await getAuthUser();
+  // const rawData = Object.fromEntries(formData);
+  try {
+    const { productId, isFavorite, pathname } = prevState;
+    /*const product = await prisma.product.findUnique({
+      where: {
+        id: productId,
+      },
+    });*/
+    if (!productId) {
+      throw new Error("Not a valid product...");
+    }
+
+    /*const favorite = await prisma.favorites.findFirst({
+      where: {
+        productId: productId,
+      },
+    });*/
+
+    if (!isFavorite) {
+      await prisma.favorites.create({
+        data: {
+          productId,
+          clerkId: user.id,
+        },
+      });
+    } else {
+      await prisma.favorites.delete({
+        where: {
+          id: isFavorite,
+        },
+      });
+    }
+    revalidatePath(pathname);
+    return {
+      message: isFavorite ? "removed from favorites" : "added to favorites",
+    };
+  } catch (e) {
+    return renderError(e);
+  }
+};
+
+export const fetchUserFavorites = async () => {
+  const user = await getAuthUser();
+
+  const favorites = await prisma.favorites.findMany({
+    where: {
+      clerkId: user.id,
+    },
+    include: {
+      product: true,
+    },
+  });
+  return favorites;
 };
 
 // HELPER FUNCTIONS

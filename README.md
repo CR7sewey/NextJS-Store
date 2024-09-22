@@ -3234,3 +3234,213 @@ npx prisma db push
 ```
 
 - restart server
+
+### CardSignIn Button
+
+- components/form/Buttons.tsx
+
+```tsx
+export const CardSignInButton = () => {
+  return (
+    <SignInButton mode="modal">
+      <Button
+        type="button"
+        size="icon"
+        variant="outline"
+        className="p-2 cursor-pointer"
+        asChild
+      >
+        <FaRegHeart />
+      </Button>
+    </SignInButton>
+  );
+};
+
+export const CardSubmitButton = ({ isFavorite }: { isFavorite: boolean }) => {
+  const { pending } = useFormStatus();
+  return (
+    <Button
+      type="submit"
+      size="icon"
+      variant="outline"
+      className=" p-2 cursor-pointer"
+    >
+      {pending ? (
+        <ReloadIcon className=" animate-spin" />
+      ) : isFavorite ? (
+        <FaHeart />
+      ) : (
+        <FaRegHeart />
+      )}
+    </Button>
+  );
+};
+```
+
+### FetchFavoriteId
+
+- actions.ts
+
+```ts
+export const fetchFavoriteId = async ({ productId }: { productId: string }) => {
+  const user = await getAuthUser();
+  const favorite = await db.favorite.findFirst({
+    where: {
+      productId,
+      clerkId: user.id,
+    },
+    select: {
+      id: true,
+    },
+  });
+  return favorite?.id || null;
+};
+
+export const toggleFavoriteAction = async () => {
+  return { message: "toggle favorite action" };
+};
+```
+
+### FavoriteToggleButton
+
+- components/products/FavoriteToggleButton.tsx
+
+```tsx
+import { auth } from "@clerk/nextjs/server";
+import { CardSignInButton } from "../form/Buttons";
+import { fetchFavoriteId } from "@/utils/actions";
+import FavoriteToggleForm from "./FavoriteToggleForm";
+async function FavoriteToggleButton({ productId }: { productId: string }) {
+  const { userId } = auth();
+  if (!userId) return <CardSignInButton />;
+  const favoriteId = await fetchFavoriteId({ productId });
+
+  return <FavoriteToggleForm favoriteId={favoriteId} productId={productId} />;
+}
+export default FavoriteToggleButton;
+```
+
+### FavoriteToggleForm
+
+```tsx
+"use client";
+
+import { usePathname } from "next/navigation";
+import FormContainer from "../form/FormContainer";
+import { toggleFavoriteAction } from "@/utils/actions";
+import { CardSubmitButton } from "../form/Buttons";
+
+type FavoriteToggleFormProps = {
+  productId: string;
+  favoriteId: string | null;
+};
+
+function FavoriteToggleForm({
+  productId,
+  favoriteId,
+}: FavoriteToggleFormProps) {
+  const pathname = usePathname();
+  const toggleAction = toggleFavoriteAction.bind(null, {
+    productId,
+    favoriteId,
+    pathname,
+  });
+  return (
+    <FormContainer action={toggleAction}>
+      <CardSubmitButton isFavorite={favoriteId ? true : false} />
+    </FormContainer>
+  );
+}
+export default FavoriteToggleForm;
+```
+
+### FavoriteToggleForm
+
+- actions.ts
+
+```ts
+export const toggleFavoriteAction = async (prevState: {
+  productId: string;
+  favoriteId: string | null;
+  pathname: string;
+}) => {
+  const user = await getAuthUser();
+  const { productId, favoriteId, pathname } = prevState;
+  try {
+    if (favoriteId) {
+      await db.favorite.delete({
+        where: {
+          id: favoriteId,
+        },
+      });
+    } else {
+      await db.favorite.create({
+        data: {
+          productId,
+          clerkId: user.id,
+        },
+      });
+    }
+    revalidatePath(pathname);
+    return { message: favoriteId ? "Removed from Faves" : "Added to Faves" };
+  } catch (error) {
+    return renderError(error);
+  }
+};
+```
+
+- test in home, products and single product page
+
+### FetchUserFavorites
+
+```ts
+export const fetchUserFavorites = async () => {
+  const user = await getAuthUser();
+  const favorites = await db.favorite.findMany({
+    where: {
+      clerkId: user.id,
+    },
+    include: {
+      product: true,
+    },
+  });
+  return favorites;
+};
+```
+
+### Favorites Page
+
+- favorites/loading.tsx
+
+```tsx
+"use client";
+
+import LoadingContainer from "@/components/global/LoadingContainer";
+
+function loading() {
+  return <LoadingContainer />;
+}
+export default loading;
+```
+
+page.tsx
+
+```tsx
+import { fetchUserFavorites } from "@/utils/actions";
+import SectionTitle from "@/components/global/SectionTitle";
+import ProductsGrid from "@/components/products/ProductsGrid";
+
+async function FavoritesPage() {
+  const favorites = await fetchUserFavorites();
+  if (favorites.length === 0)
+    return <SectionTitle text="You have no favorites yet." />;
+  return (
+    <div>
+      <SectionTitle text="Favorites" />
+      <ProductsGrid products={favorites.map((favorite) => favorite.product)} />
+    </div>
+  );
+}
+
+export default FavoritesPage;
+```
