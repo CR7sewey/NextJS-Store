@@ -6,6 +6,7 @@ import format from "@/utils/format";
 import BreadCrumbs from "@/components/single-product/BreadCrumbs";
 import RatingsReviews from "@/components/single-product/RatingsReviews";
 import AddToCart from "@/components/single-product/AddToCart";
+import ShareButton from "@/components/products/ShareButton";
 
 export default async function SingleProduct({
   params,
@@ -35,7 +36,10 @@ export default async function SingleProduct({
         <div>
           <div className="flex gap-x-8 items-center">
             <h1 className="text-3xl font-bold capitalize">{product.name}</h1>
-            <FavoriteToggleButton productId={product.id} />
+            <div className="flex items-center gap-x-2">
+              <FavoriteToggleButton productId={product.id} />
+              <ShareButton productId={product.id} name={product.name} />
+            </div>
           </div>
           {/* Product Rating */}
           <RatingsReviews id={product.id} />

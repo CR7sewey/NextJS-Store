@@ -6,6 +6,7 @@ import format from "@/utils/format";
 import BreadCrumbs from "./BreadCrumbs";
 import RatingsReviews from "./RatingsReviews";
 import AddToCart from "./AddToCart";
+import ShareButton from "../products/ShareButton";
 
 export default async function SingleProduct({ id }: { id: string }) {
   const product = await fetchProduct({ id });
@@ -31,7 +32,10 @@ export default async function SingleProduct({ id }: { id: string }) {
         <div>
           <div className="flex gap-x-8 items-center">
             <h1 className="text-3xl font-bold capitalize">{product.name}</h1>
-            <FavoriteToggleButton productId={product.id} />
+            <div className="flex items-center gap-x-2">
+              <FavoriteToggleButton productId={product.id} />
+              <ShareButton />
+            </div>
           </div>
           {/* Product Rating */}
           <RatingsReviews id={product.id} />

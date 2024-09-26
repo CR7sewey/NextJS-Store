@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^5.3.7",
+    "@nextui-org/popover": "^2.1.29",
     "@prisma/client": "^5.19.0",
     "@radix-ui/react-checkbox": "^1.1.1",
     "@radix-ui/react-dropdown-menu": "^2.1.1",
@@ -29,6 +30,7 @@
     "react": "^18",
     "react-dom": "^18",
     "react-icons": "^5.3.0",
+    "react-share": "^5.1.0",
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
     "use-debounce": "^10.0.3",

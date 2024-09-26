@@ -3444,3 +3444,84 @@ async function FavoritesPage() {
 
 export default FavoritesPage;
 ```
+
+### React Share
+
+[React Share](https://www.npmjs.com/package/react-share)
+
+```sh
+npm i react-share
+```
+
+- create NEXT_PUBLIC_WEBSITE_URL in .env
+- get url from vercel
+
+components/single-product/ShareButton.tsx
+
+```tsx
+"use client";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Button } from "../ui/button";
+import { LuShare2 } from "react-icons/lu";
+
+import {
+  TwitterShareButton,
+  EmailShareButton,
+  LinkedinShareButton,
+  TwitterIcon,
+  EmailIcon,
+  LinkedinIcon,
+} from "react-share";
+
+function ShareButton({ productId, name }: { productId: string; name: string }) {
+  const url = process.env.NEXT_PUBLIC_WEBSITE_URL;
+  const shareLink = `${url}/products/${productId}`;
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="icon" className="p-2">
+          <LuShare2 />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        side="top"
+        align="end"
+        sideOffset={10}
+        className="flex items-center gap-x-2 justify-center w-full"
+      >
+        <TwitterShareButton url={shareLink} title={name}>
+          <TwitterIcon size={32} round />
+        </TwitterShareButton>
+        <LinkedinShareButton url={shareLink} title={name}>
+          <LinkedinIcon size={32} round />
+        </LinkedinShareButton>
+        <EmailShareButton url={shareLink} subject={name}>
+          <EmailIcon size={32} round />
+        </EmailShareButton>
+      </PopoverContent>
+    </Popover>
+  );
+}
+export default ShareButton;
+```
+
+- products/[id]/page.tsx
+
+```tsx
+import ShareButton from "@/components/single-product/ShareButton";
+
+return (
+  <div className="flex gap-x-8 items-center">
+    <h1 className="capitalize text-3xl font-bold">{name}</h1>
+    <div className="flex items-center gap-x-2">
+      <FavoriteToggleButton productId={params.id} />
+      <ShareButton name={product.name} productId={params.id} />
+    </div>
+  </div>
+);
+```
