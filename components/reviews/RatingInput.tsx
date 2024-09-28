@@ -32,9 +32,7 @@ export default function RatingInput({
 
   return (
     <div className="mb-2 max-w-xs">
-      <Label htmlFor={name} className="capitalize">
-        {label ? label : name}
-      </Label>
+      <Label className="capitalize">{label ? label : name}</Label>
       <Select defaultValue={numbersRating[0].props.value} name={name} required>
         <SelectTrigger className="w-[180px]">
           <SelectValue />
