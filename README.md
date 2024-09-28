@@ -3551,3 +3551,30 @@ npx prisma db push
 ```
 
 - restar the server
+
+### Review Components and Actions
+
+- actions.ts
+
+```ts
+export const createReviewAction = async (
+  prevState: any,
+  formData: FormData
+) => {
+  return { message: "review submitted successfully" };
+};
+
+export const fetchProductReviews = async () => {};
+export const fetchProductReviewsByUser = async () => {};
+export const deleteReviewAction = async () => {};
+export const findExistingReview = async () => {};
+export const fetchProductRating = async () => {};
+```
+
+- components/reviews
+  - RatingInput.tsx
+  - Comment.tsx
+  - ProductReviews.tsx
+  - Rating.tsx
+  - ReviewCard.tsx
+  - SubmitReview.tsx

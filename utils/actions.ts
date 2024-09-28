@@ -9,7 +9,6 @@ import { imageSchema, productSchema, validateWithZodSchema } from "./schemas";
 import { error } from "console";
 import { deleteImage, uploadImage } from "./supabase";
 import { revalidatePath } from "next/cache";
-import { rejects } from "assert";
 
 export const fetchAllProducts = async (searchParam: string = "") => {
   console.log(searchParam);
@@ -278,6 +277,25 @@ export const fetchUserFavorites = async () => {
   });
   return favorites;
 };
+
+export const fetchProductReviews = async ({ id }: { id: string }) => {
+  return { message: "All reviews for product" };
+};
+
+export const createReviewAction = async (
+  prevState: any,
+  formData: FormData
+) => {
+  return { message: "Review submited for product" };
+};
+
+export const deleteReviewAction = async (prevState: { id: string }) => {
+  return { message: "Review deleted for product" };
+};
+
+export const findExistingReview = async () => {};
+export const fetchProductRating = async () => {};
+export const fetchProductReviewsByUser = async () => {};
 
 // HELPER FUNCTIONS
 
