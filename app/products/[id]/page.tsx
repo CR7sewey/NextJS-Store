@@ -7,6 +7,9 @@ import BreadCrumbs from "@/components/single-product/BreadCrumbs";
 import RatingsReviews from "@/components/single-product/RatingsReviews";
 import AddToCart from "@/components/single-product/AddToCart";
 import ShareButton from "@/components/products/ShareButton";
+import SubmitReview from "@/components/reviews/SubmitReview";
+import SectionTitle from "@/components/global/SectionTitle";
+import ProductReviews from "@/components/reviews/ProductReviews";
 
 export default async function SingleProduct({
   params,
@@ -53,6 +56,11 @@ export default async function SingleProduct({
           {/* Add To Cart Button */}
           <AddToCart />
         </div>
+      </div>
+      <SectionTitle text="Product Reviews" />
+      <div className="mt-5">
+        <ProductReviews productId={params.id} />
+        <SubmitReview productId={product.id} />
       </div>
     </section>
   );
