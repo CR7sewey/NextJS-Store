@@ -3525,3 +3525,29 @@ return (
   </div>
 );
 ```
+
+### Review Model
+
+```prisma
+model Product {
+    reviews Review []
+}
+model Review {
+  id        String   @id @default(uuid())
+  clerkId  String
+  rating Int
+  comment String
+  authorName String
+  authorImageUrl String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+}
+```
+
+```sh
+npx prisma db push
+```
+
+- restar the server
