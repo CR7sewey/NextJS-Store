@@ -3819,3 +3819,19 @@ function Comment({ comment }: { comment: string }) {
 
 export default Comment;
 ```
+
+### Fetch Product Reviews
+
+```ts
+export const fetchProductReviews = async (productId: string) => {
+  const reviews = await db.review.findMany({
+    where: {
+      productId,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+  return reviews;
+};
+```

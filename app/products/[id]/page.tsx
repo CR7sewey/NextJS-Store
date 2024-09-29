@@ -57,7 +57,6 @@ export default async function SingleProduct({
           <AddToCart />
         </div>
       </div>
-      <SectionTitle text="Product Reviews" />
       <div className="mt-5">
         <ProductReviews productId={params.id} />
         <SubmitReview productId={product.id} />

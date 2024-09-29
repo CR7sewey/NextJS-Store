@@ -284,7 +284,15 @@ export const fetchUserFavorites = async () => {
 };
 
 export const fetchProductReviews = async ({ id }: { id: string }) => {
-  return { message: "All reviews for product" };
+  const reviews = await prisma.review.findMany({
+    where: {
+      productId: id,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+  return reviews;
 };
 
 export const createReviewAction = async (
