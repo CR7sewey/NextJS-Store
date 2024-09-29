@@ -313,24 +313,25 @@ export const fetchProductRating = async ({
 }: {
   productId: string;
 }) => {
-  try {
-    const ratings = await prisma.review.findMany({
-      where: {
-        productId: productId,
-      },
-      select: {
-        rating: true,
-      },
-    });
-    const ratingMean = (
+  const ratings = await prisma.review.findMany({
+    where: {
+      productId: productId,
+    },
+    select: {
+      rating: true,
+    },
+  });
+
+  let ratingMean = "0";
+
+  if (ratings.length >= 0) {
+    ratingMean = (
       ratings.reduce((acc, val) => {
         return acc + val.rating;
       }, 0) / ratings.length
     ).toFixed(1);
-    return { rating: ratingMean, numberOf: ratings.length };
-  } catch (e) {
-    renderError(e);
   }
+  return { rating: ratingMean, numberOf: ratings.length };
 };
 export const fetchProductReviewsByUser = async () => {};
 
