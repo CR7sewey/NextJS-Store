@@ -3953,3 +3953,143 @@ export const fetchProductRating = async ({
   };
 };
 ```
+
+### ProductRating
+
+- components/single-product/ProductRating.tsx
+
+```tsx
+const { rating, count } = await fetchProductRating(productId);
+```
+
+### FetchProductReviewsByUser and DeleteReview Action
+
+```ts
+export const fetchProductReviewsByUser = async () => {
+  const user = await getAuthUser();
+  const reviews = await db.review.findMany({
+    where: {
+      clerkId: user.id,
+    },
+    select: {
+      id: true,
+      rating: true,
+      comment: true,
+      product: {
+        select: {
+          image: true,
+          name: true,
+        },
+      },
+    },
+  });
+  return reviews;
+};
+export const deleteReviewAction = async (prevState: { reviewId: string }) => {
+  const { reviewId } = prevState;
+  const user = await getAuthUser();
+
+  try {
+    await db.review.delete({
+      where: {
+        id: reviewId,
+        clerkId: user.id,
+      },
+    });
+
+    revalidatePath("/reviews");
+    return { message: "Review deleted successfully" };
+  } catch (error) {
+    return renderError(error);
+  }
+};
+```
+
+### Reviews Page
+
+- setup "reviews" link in utils/links.ts
+- create app/reviews/page.tsx and app/reviews/loading.tsx
+
+page.tsx
+
+```tsx
+import { deleteReviewAction, fetchProductReviewsByUser } from "@/utils/actions";
+import ReviewCard from "@/components/reviews/ReviewCard";
+import SectionTitle from "@/components/global/SectionTitle";
+import FormContainer from "@/components/form/FormContainer";
+import { IconButton } from "@/components/form/Buttons";
+async function ReviewsPage() {
+  const reviews = await fetchProductReviewsByUser();
+  if (reviews.length === 0)
+    return <SectionTitle text="you have no reviews yet" />;
+
+  return (
+    <>
+      <SectionTitle text="Your Reviews" />
+      <section className="grid md:grid-cols-2 gap-8 mt-4 ">
+        {reviews.map((review) => {
+          const { comment, rating } = review;
+          const { name, image } = review.product;
+          const reviewInfo = {
+            comment,
+            rating,
+            name,
+            image,
+          };
+          return (
+            <ReviewCard key={review.id} reviewInfo={reviewInfo}>
+              <DeleteReview reviewId={review.id} />
+            </ReviewCard>
+          );
+        })}
+      </section>
+    </>
+  );
+}
+
+const DeleteReview = ({ reviewId }: { reviewId: string }) => {
+  const deleteReview = deleteReviewAction.bind(null, { reviewId });
+  return (
+    <FormContainer action={deleteReview}>
+      <IconButton actionType="delete" />
+    </FormContainer>
+  );
+};
+
+export default ReviewsPage;
+```
+
+loading.tsx
+
+```tsx
+"use client";
+
+import { Card, CardHeader } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+function loading() {
+  return (
+    <section className="grid md:grid-cols-2 gap-8 mt-4 ">
+      <ReviewLoadingCard />
+      <ReviewLoadingCard />
+    </section>
+  );
+}
+
+const ReviewLoadingCard = () => {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center">
+          <Skeleton className="w-12 h-12 rounded-full" />
+          <div className="ml-4">
+            <Skeleton className="w-[150px] h-4 mb-2" />
+            <Skeleton className="w-[100px] h-4" />
+          </div>
+        </div>
+      </CardHeader>
+    </Card>
+  );
+};
+
+export default loading;
+```

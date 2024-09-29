@@ -18,8 +18,8 @@ async function ProductReviews({ productId }: { productId: string }) {
           const obj = {
             comment,
             rating,
-            authorName,
-            authorImageUrl,
+            name: authorName,
+            image: authorImageUrl,
           };
           return <ReviewCard key={values.id} {...obj} />;
         })}

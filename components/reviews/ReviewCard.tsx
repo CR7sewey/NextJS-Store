@@ -5,16 +5,16 @@ import Image from "next/image";
 import Comment from "./Comment";
 
 type ReviewCardProps = {
-  authorImageUrl: string;
-  authorName: string;
+  image: string;
+  name: string;
   rating: number;
   comment: string;
   children?: React.ReactNode;
 };
 
 function ReviewCard({
-  authorImageUrl,
-  authorName,
+  image,
+  name,
   rating,
   comment,
   children,
@@ -24,14 +24,14 @@ function ReviewCard({
       <CardHeader>
         <div className="flex items-center">
           <Image
-            src={authorImageUrl}
+            src={image}
             width={48}
             height={48}
-            alt={authorName}
+            alt={name}
             className="w-12 h-12 rounded-full object-cover"
           />
           <div className="ml-4">
-            <h3 className="text-sm font-bold capitalize mb-1">{authorName}</h3>
+            <h3 className="text-sm font-bold capitalize mb-1">{name}</h3>
             <Rating rating={rating} />
           </div>
         </div>

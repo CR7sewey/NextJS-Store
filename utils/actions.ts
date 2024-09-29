@@ -312,7 +312,20 @@ export const createReviewAction = async (
 };
 
 export const deleteReviewAction = async (prevState: { id: string }) => {
-  return { message: "Review deleted for product" };
+  const reviewId = prevState.id;
+  const user = await getAuthUser();
+  try {
+    const product = await prisma.review.delete({
+      where: {
+        id: reviewId,
+        clerkId: user.id,
+      },
+    });
+    revalidatePath("/reviews");
+    return { message: "review removed" };
+  } catch (e) {
+    return renderError(e);
+  }
 };
 
 export const findExistingReview = async () => {};
@@ -340,7 +353,29 @@ export const fetchProductRating = async ({
     numberOf: result[0]?._count.rating ?? 0,
   };
 };
-export const fetchProductReviewsByUser = async () => {};
+export const fetchProductReviewsByUser = async () => {
+  const user = await getAuthUser();
+  const reviews = await prisma.review.findMany({
+    where: {
+      clerkId: user.id,
+    },
+    select: {
+      id: true,
+      rating: true,
+      comment: true,
+      product: {
+        select: {
+          image: true,
+          name: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+  return reviews;
+};
 
 // HELPER FUNCTIONS
 
