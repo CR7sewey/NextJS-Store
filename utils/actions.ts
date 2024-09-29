@@ -308,7 +308,30 @@ export const deleteReviewAction = async (prevState: { id: string }) => {
 };
 
 export const findExistingReview = async () => {};
-export const fetchProductRating = async () => {};
+export const fetchProductRating = async ({
+  productId,
+}: {
+  productId: string;
+}) => {
+  try {
+    const ratings = await prisma.review.findMany({
+      where: {
+        productId: productId,
+      },
+      select: {
+        rating: true,
+      },
+    });
+    const ratingMean = (
+      ratings.reduce((acc, val) => {
+        return acc + val.rating;
+      }, 0) / ratings.length
+    ).toFixed(1);
+    return { rating: ratingMean, numberOf: ratings.length };
+  } catch (e) {
+    renderError(e);
+  }
+};
 export const fetchProductReviewsByUser = async () => {};
 
 // HELPER FUNCTIONS

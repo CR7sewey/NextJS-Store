@@ -3752,3 +3752,70 @@ export const createReviewAction = async (
   }
 };
 ```
+
+### Rating Component
+
+```tsx
+import { FaStar, FaRegStar } from "react-icons/fa";
+
+function Rating({ rating }: { rating: number }) {
+  // rating = 2
+  // 1 <= 2 true
+  // 2 <= 2 true
+  // 3 <= 2 false
+  // ....
+  const stars = Array.from({ length: 5 }, (_, i) => i + 1 <= rating);
+
+  return (
+    <div className="flex items-center gap-x-1">
+      {stars.map((isFilled, i) => {
+        const className = `w-3 h-3 ${
+          isFilled ? "text-primary" : "text-gray-400"
+        }`;
+        return isFilled ? (
+          <FaStar className={className} key={i} />
+        ) : (
+          <FaRegStar className={className} key={i} />
+        );
+      })}
+    </div>
+  );
+}
+
+export default Rating;
+```
+
+### Comment Component
+
+```tsx
+"use client";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+function Comment({ comment }: { comment: string }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const toggleExpanded = () => {
+    setIsExpanded(!isExpanded);
+  };
+  const longComment = comment.length > 130;
+  const displayComment =
+    longComment && !isExpanded ? `${comment.slice(0, 130)}...` : comment;
+
+  return (
+    <div>
+      <p className="text-sm">{displayComment}</p>
+      {longComment && (
+        <Button
+          variant="link"
+          className="pl-0 text-muted-foreground"
+          onClick={toggleExpanded}
+        >
+          {isExpanded ? "Show Less" : "Show More"}
+        </Button>
+      )}
+    </div>
+  );
+}
+
+export default Comment;
+```
