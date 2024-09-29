@@ -67,3 +67,46 @@ export function validateImageFile() {
       }
     );
 }
+/*
+  id String @id @default(uuid())
+  clerkId String
+  productId   String
+  product     Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  rating      Int
+  comment  String
+  authorName String
+  authorImageUrl String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+*/
+export const reviewSchema = z.object({
+  productId: z.string().refine(
+    (description) => {
+      return description !== "";
+    },
+    {
+      message: "product id cannot be empty",
+    }
+  ),
+  rating: z.coerce
+    .number()
+    .int()
+    .min(1, {
+      message: "Rating must be at least 1",
+    })
+    .max(5, {
+      message: "Rating must be less than 6",
+    }),
+  authorName: z.string().refine((value) => value !== "", {
+    message: "Author name cannot be empty",
+  }),
+  authorImageUrl: z.string().refine((value) => value !== "", {
+    message: "Author image URL cannot be empty",
+  }),
+  comment: z
+    .string()
+    .min(10, { message: "Comment must be at least 10 characters long" })
+    .max(1000, { message: "Comment must be at most 1000 characters long" }),
+});
+
+export type Review = z.infer<typeof reviewSchema>;

@@ -5,7 +5,12 @@ import { redirect } from "next/navigation";
 import { actionFunction } from "./types";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { z } from "zod";
-import { imageSchema, productSchema, validateWithZodSchema } from "./schemas";
+import {
+  imageSchema,
+  productSchema,
+  reviewSchema,
+  validateWithZodSchema,
+} from "./schemas";
 import { error } from "console";
 import { deleteImage, uploadImage } from "./supabase";
 import { revalidatePath } from "next/cache";
@@ -286,7 +291,16 @@ export const createReviewAction = async (
   prevState: any,
   formData: FormData
 ) => {
-  return { message: "Review submited for product" };
+  const user = await getAuthUser();
+  const rawData = Object.fromEntries(formData);
+  try {
+    const result = validateWithZodSchema(reviewSchema, rawData);
+    await prisma.review.create({ data: { ...result, clerkId: user.id } });
+    revalidatePath(`/products/${result.productId}`);
+    return { message: `"Review submited for product~: ${result.productId}` };
+  } catch (e) {
+    return renderError(e);
+  }
 };
 
 export const deleteReviewAction = async (prevState: { id: string }) => {
