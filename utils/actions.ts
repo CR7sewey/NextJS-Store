@@ -391,6 +391,20 @@ export const fetchProductReviewsByUser = async () => {
   return reviews;
 };
 
+export const fetchCartItems = async () => {};
+
+export const addToCartAction = async () => {};
+
+export const removeCartItemAction = async () => {};
+
+export const updateCartItemAction = async () => {};
+
+const updateOrCreateCartItem = async () => {};
+
+export const fetchOrCreateCart = async () => {};
+
+export const updateCart = async () => {};
+
 // HELPER FUNCTIONS
 
 const renderError = (error: unknown): { message: string } => {

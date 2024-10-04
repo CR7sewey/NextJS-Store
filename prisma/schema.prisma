@@ -32,6 +32,7 @@ model Product {
   clerkId  String
   favorites   Favorites[]
   reviews      Review[]
+  cartItems   CartItem[]
 }
 
 model Favorites {
@@ -57,5 +58,30 @@ model Review {
   updatedAt DateTime @updatedAt
  
 }
+
+model Cart {
+  id            String @id @default(uuid())
+  clerkId       String
+  cartItems     CartItem[]
+  numItemsInCart  Int @default(0)
+  cartTotal     Float @default(0)
+  shipping      Float @default(5)
+  tax           Float @default(0)
+  taxRate       Float @default(0.1)
+  orderTotal    Float @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model CartItem {
+  id String @id @default(uuid())
+  productId   String
+  product     Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cartId      String
+  cart        Cart @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  amount      Int @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  }
 
 // npx prisma db push
