@@ -391,7 +391,18 @@ export const fetchProductReviewsByUser = async () => {
   return reviews;
 };
 
-export const fetchCartItems = async () => {};
+export const fetchCartItems = async () => {
+  const { userId } = auth();
+  const cartItems = await prisma.cart.findFirst({
+    where: {
+      clerkId: userId ?? "",
+    },
+    select: {
+      numItemsInCart: true,
+    },
+  });
+  return cartItems?.numItemsInCart || 0;
+};
 
 export const addToCartAction = async () => {};
 
