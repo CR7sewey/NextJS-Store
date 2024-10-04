@@ -1,4 +1,4 @@
-import { fetchProduct } from "@/utils/actions";
+import { fetchProduct, findExistingReview } from "@/utils/actions";
 import Image from "next/image";
 import React, { Suspense } from "react";
 import FavoriteToggleButton from "@/components/products/FavoriteToggleButton";
@@ -10,13 +10,18 @@ import ShareButton from "@/components/products/ShareButton";
 import SubmitReview from "@/components/reviews/SubmitReview";
 import SectionTitle from "@/components/global/SectionTitle";
 import ProductReviews from "@/components/reviews/ProductReviews";
+import { auth } from "@clerk/nextjs/server";
 
 export default async function SingleProduct({
   params,
 }: {
   params: { id: string };
 }) {
+  const { userId } = auth();
   const product = await fetchProduct({ id: params.id });
+  const displayButtonReview =
+    userId && !(await findExistingReview({ userId, productId: product.id }));
+
   console.log(product, "sou eu");
   return (
     <section>
@@ -59,7 +64,7 @@ export default async function SingleProduct({
       </div>
       <div className="mt-5">
         <ProductReviews productId={params.id} />
-        <SubmitReview productId={product.id} />
+        {displayButtonReview ? <SubmitReview productId={product.id} /> : <></>}
       </div>
     </section>
   );

@@ -4093,3 +4093,38 @@ const ReviewLoadingCard = () => {
 
 export default loading;
 ```
+
+### Restrict Access
+
+actions.ts
+
+```ts
+export const findExistingReview = async (userId: string, productId: string) => {
+  return db.review.findFirst({
+    where: {
+      clerkId: userId,
+      productId,
+    },
+  });
+};
+```
+
+- app/products/[id]/page.tsx
+
+```tsx
+import { fetchSingleProduct, findExistingReview } from "@/utils/actions";
+import { auth } from "@clerk/nextjs/server";
+
+async function SingleProductPage({ params }: { params: { id: string } }) {
+  const { userId } = auth();
+  const reviewDoesNotExist =
+    userId && !(await findExistingReview(userId, product.id));
+
+  return (
+    <>
+      <ProductReviews productId={params.id} />
+      {reviewDoesNotExist && <SubmitReview productId={params.id} />}
+    </>
+  );
+}
+```

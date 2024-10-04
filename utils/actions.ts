@@ -328,7 +328,21 @@ export const deleteReviewAction = async (prevState: { id: string }) => {
   }
 };
 
-export const findExistingReview = async () => {};
+export const findExistingReview = async ({
+  userId,
+  productId,
+}: {
+  userId: string;
+  productId: string;
+}) => {
+  return prisma.review.findFirst({
+    where: {
+      clerkId: userId,
+      productId,
+    },
+  });
+};
+
 export const fetchProductRating = async ({
   productId,
 }: {
