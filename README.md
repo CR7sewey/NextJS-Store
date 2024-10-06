@@ -4452,3 +4452,275 @@ export const addToCartAction = async (prevState: any, formData: FormData) => {
   redirect("/cart");
 };
 ```
+
+### Cart Page
+
+- create components/cart
+
+  - CartItemColumns.tsx
+  - CartItemsList.tsx
+  - CartTotals.tsx
+  - ThirdColumn.tsx
+
+- app/cart/page.tsx
+
+```tsx
+import CartItemsList from "@/components/cart/CartItemsList";
+import CartTotals from "@/components/cart/CartTotals";
+import SectionTitle from "@/components/global/SectionTitle";
+import { fetchOrCreateCart, updateCart } from "@/utils/actions";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
+async function CartPage() {
+  const { userId } = auth();
+  if (!userId) redirect("/");
+  const cart = await fetchOrCreateCart({ userId });
+  await updateCart(cart);
+
+  if (cart.numItemsInCart === 0) {
+    return <SectionTitle text="Empty cart" />;
+  }
+  return (
+    <>
+      <SectionTitle text="Shopping Cart" />
+      <div className="mt-8 grid gap-4 lg:grid-cols-12">
+        <div className="lg:col-span-8">
+          <CartItemsList cartItems={cart.cartItems} />
+        </div>
+        <div className="lg:col-span-4 lg:pl-4">
+          <CartTotals cart={cart} />
+        </div>
+      </div>
+    </>
+  );
+}
+export default CartPage;
+```
+
+### CartTotals Component
+
+```tsx
+import { Card, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { formatCurrency } from "@/utils/format";
+import { createOrderAction } from "@/utils/actions";
+import FormContainer from "../form/FormContainer";
+import { SubmitButton } from "../form/Buttons";
+import { Cart } from "@prisma/client";
+
+function CartTotals({ cart }: { cart: Cart }) {
+  const { cartTotal, shipping, tax, orderTotal } = cart;
+  return (
+    <div>
+      <Card className="p-8 ">
+        <CartTotalRow label="Subtotal" amount={cartTotal} />
+        <CartTotalRow label="Shipping" amount={shipping} />
+        <CartTotalRow label="Tax" amount={tax} />
+        <CardTitle className="mt-8">
+          <CartTotalRow label="Order Total" amount={orderTotal} lastRow />
+        </CardTitle>
+      </Card>
+      <FormContainer action={createOrderAction}>
+        <SubmitButton text="Place Order" className="w-full mt-8" />
+      </FormContainer>
+    </div>
+  );
+}
+
+function CartTotalRow({
+  label,
+  amount,
+  lastRow,
+}: {
+  label: string;
+  amount: number;
+  lastRow?: boolean;
+}) {
+  return (
+    <>
+      <p className="flex justify-between text-sm">
+        <span>{label}</span>
+        <span>{formatCurrency(amount)}</span>
+      </p>
+      {lastRow ? null : <Separator className="my-2" />}
+    </>
+  );
+}
+
+export default CartTotals;
+```
+
+### Cart Item Columns - 1,2 and 4
+
+- cart/CartItemColumns.tsx
+
+```tsx
+import { formatCurrency } from "@/utils/format";
+import Image from "next/image";
+import Link from "next/link";
+export const FirstColumn = ({
+  name,
+  image,
+}: {
+  image: string;
+  name: string;
+}) => {
+  return (
+    <div className="relative h-24 w-24 sm:h-32 sm:w-32">
+      <Image
+        src={image}
+        alt={name}
+        fill
+        sizes="(max-width:768px) 100vw,(max-width:1200px) 50vw,33vw"
+        priority
+        className="w-full rounded-md object-cover"
+      />
+    </div>
+  );
+};
+export const SecondColumn = ({
+  name,
+  company,
+  productId,
+}: {
+  name: string;
+  company: string;
+  productId: string;
+}) => {
+  return (
+    <div className=" sm:w-48">
+      <Link href={`/products/${productId}`}>
+        <h3 className="capitalize font-medium hover:underline">{name}</h3>
+      </Link>
+      <h4 className="mt-2 capitalize text-xs">{company}</h4>
+    </div>
+  );
+};
+
+export const FourthColumn = ({ price }: { price: number }) => {
+  return <p className="font-medium md:ml-auto">{formatCurrency(price)}</p>;
+};
+```
+
+### CartItemsList Component
+
+- utils/types.ts
+
+```ts
+import { Prisma } from "@prisma/client";
+
+export type CartItemWithProduct = Prisma.CartItemGetPayload<{
+  include: { product: true };
+}>;
+```
+
+```tsx
+import { Card } from "@/components/ui/card";
+import { FirstColumn, SecondColumn, FourthColumn } from "./CartItemColumns";
+import ThirdColumn from "./ThirdColumn";
+import { CartItemWithProduct } from "@/utils/types";
+function CartItemsList({ cartItems }: { cartItems: CartItemWithProduct[] }) {
+  return (
+    <div>
+      {cartItems.map((cartItem) => {
+        const { id, amount } = cartItem;
+        const { id: productId, image, name, company, price } = cartItem.product;
+        return (
+          <Card
+            key={id}
+            className="flex flex-col gap-y-4 md:flex-row flex-wrap p-6 mb-8 gap-x-4"
+          >
+            <FirstColumn image={image} name={name} />
+            <SecondColumn name={name} company={company} productId={productId} />
+            <ThirdColumn id={id} quantity={amount} />
+            <FourthColumn price={price} />
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
+export default CartItemsList;
+```
+
+### Cart Item - Third Column
+
+- optional
+
+actions.ts
+
+```ts
+export const removeCartItemAction = async (
+  prevState: any,
+  formData: FormData
+) => {
+  return { message: "Item removed from cart" };
+};
+```
+
+```tsx
+"use client";
+import { useState } from "react";
+import SelectProductAmount from "../single-product/SelectProductAmount";
+import { Mode } from "../single-product/SelectProductAmount";
+import FormContainer from "../form/FormContainer";
+import { SubmitButton } from "../form/Buttons";
+import { removeCartItemAction, updateCartItemAction } from "@/utils/actions";
+import { useToast } from "../ui/use-toast";
+
+function ThirdColumn({ quantity, id }: { quantity: number; id: string }) {
+  const [amount, setAmount] = useState(quantity);
+
+  const handleAmountChange = async (value: number) => {
+    setAmount(value);
+  };
+
+  return (
+    <div className="md:ml-8">
+      <SelectProductAmount
+        amount={amount}
+        setAmount={handleAmountChange}
+        mode={Mode.CartItem}
+        isLoading={false}
+      />
+      <FormContainer action={removeCartItemAction}>
+        <input type="hidden" name="id" value={id} />
+        <SubmitButton size="sm" className="mt-4" text="remove" />
+      </FormContainer>
+    </div>
+  );
+}
+export default ThirdColumn;
+```
+
+### RemoveCartItem Action
+
+- actions.ts
+
+```ts
+eexport const removeCartItemAction = async (
+  prevState: any,
+  formData: FormData
+) => {
+  const user = await getAuthUser();
+  try {
+    const cartItemId = formData.get('id') as string;
+    const cart = await fetchOrCreateCart({
+      userId: user.id,
+      errorOnFailure: true,
+    });
+    await db.cartItem.delete({
+      where: {
+        id: cartItemId,
+        cartId: cart.id,
+      },
+    });
+
+    await updateCart(cart);
+    revalidatePath('/cart');
+    return { message: 'Item removed from cart' };
+  } catch (error) {
+    return renderError(error);
+  }
+};
+```

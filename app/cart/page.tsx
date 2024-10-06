@@ -1,17 +1,26 @@
+import { CartItemsList } from "@/components/cart/CartItemsList";
+import { CartTotals } from "@/components/cart/CartTotals";
 import SectionTitle from "@/components/global/SectionTitle";
 import ProductsGrid from "@/components/products/ProductsGrid";
 import { Button } from "@/components/ui/button";
-import { fetchCartItems } from "@/utils/actions";
+import { fetchCartItems, fetchOrCreateCart, updateCart } from "@/utils/actions";
+import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import React from "react";
 
 async function Page() {
-  const cartItems = await fetchCartItems();
-  console.log("Oi, estou aqui", cartItems);
+  const { userId } = auth();
+  if (!userId) {
+    redirect("/");
+  }
+
+  const cart = await fetchOrCreateCart({ userId });
+  await updateCart(cart);
   return (
     <section>
       <SectionTitle text="shopping cart" />
-      {cartItems === 0 ? (
+      {cart.numItemsInCart === 0 ? (
         <>
           <h5 className="text-2xl mt-16">
             Sorry, no products added to your cart...
@@ -26,7 +35,14 @@ async function Page() {
           </Button>
         </>
       ) : (
-        <h1>1</h1>
+        <div className="mt-8 grid gap-4 lg:grid-cols-12">
+          <div className="lg:col-span-8">
+            <CartItemsList cartItems={cart.cartItems} />
+          </div>
+          <div className="lg:col-span-4 lg:pl-4">
+            <CartTotals cart={cart} />
+          </div>
+        </div>
       )}
     </section>
   );

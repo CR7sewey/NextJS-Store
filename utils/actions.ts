@@ -428,7 +428,38 @@ export const addToCartAction = async (prevState: any, formData: FormData) => {
   redirect(`/cart`);
 };
 
-export const removeCartItemAction = async () => {};
+export const removeCartItemAction = async (
+  prevState: any,
+  formData: FormData
+) => {
+  const user = await getAuthUser();
+
+  const rawData = Object.fromEntries(formData);
+
+  try {
+    let cart = await fetchOrCreateCart({
+      userId: user.id,
+      errorOnFailure: true,
+    });
+    const { id } = rawData;
+
+    await prisma.cartItem.delete({
+      where: {
+        id: id as string,
+        cartId: cart.id,
+      },
+    });
+
+    await updateCart(cart);
+    revalidatePath("/cart");
+    return { message: "Item removed from cart" };
+
+    //return { message: `${amount} Product ${productId} added to the cart...` };
+  } catch (e) {
+    return renderError(e);
+  }
+  redirect(`/cart`);
+};
 
 export const updateCartItemAction = async (cartId: string) => {};
 
@@ -560,6 +591,10 @@ export const updateCart = async (cart: Cart) => {
   });
 
   return { message: `Cart updated...` };
+};
+
+export const createOrderAction = async () => {
+  return { message: "Order placed..." };
 };
 
 // HELPER FUNCTIONS
