@@ -1,5 +1,5 @@
 import { CartItemsList } from "@/components/cart/CartItemsList";
-import { CartTotals } from "@/components/cart/CartTotals";
+import CartTotals from "@/components/cart/CartTotals";
 import SectionTitle from "@/components/global/SectionTitle";
 import ProductsGrid from "@/components/products/ProductsGrid";
 import { Button } from "@/components/ui/button";
@@ -15,12 +15,12 @@ async function Page() {
     redirect("/");
   }
 
-  const cart = await fetchOrCreateCart({ userId });
-  await updateCart(cart);
+  const previousCart = await fetchOrCreateCart({ userId });
+  const { currentCart, cartItems } = await updateCart(previousCart);
   return (
     <section>
       <SectionTitle text="shopping cart" />
-      {cart.numItemsInCart === 0 ? (
+      {cartItems.length === 0 ? (
         <>
           <h5 className="text-2xl mt-16">
             Sorry, no products added to your cart...
@@ -37,10 +37,10 @@ async function Page() {
       ) : (
         <div className="mt-8 grid gap-4 lg:grid-cols-12">
           <div className="lg:col-span-8">
-            <CartItemsList cartItems={cart.cartItems} />
+            <CartItemsList cartItems={cartItems} />
           </div>
           <div className="lg:col-span-4 lg:pl-4">
-            <CartTotals cart={cart} />
+            <CartTotals cart={currentCart} />
           </div>
         </div>
       )}

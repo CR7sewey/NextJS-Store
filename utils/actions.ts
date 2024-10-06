@@ -461,7 +461,36 @@ export const removeCartItemAction = async (
   redirect(`/cart`);
 };
 
-export const updateCartItemAction = async (cartId: string) => {};
+export const updateCartItemAction = async ({
+  amount,
+  cartId,
+}: {
+  amount: number;
+  cartId: string;
+}) => {
+  const user = await getAuthUser();
+  try {
+    let cart = await fetchOrCreateCart({
+      userId: user.id,
+      errorOnFailure: true,
+    });
+    await prisma.cartItem.update({
+      where: {
+        id: cartId,
+        cartId: cart.id,
+      },
+      data: {
+        amount,
+      },
+    });
+
+    await updateCart(cart);
+    revalidatePath("/cart");
+    return { message: "Cart updated" };
+  } catch (e) {
+    return renderError(e);
+  }
+};
 
 // Helper functions for cart
 const updateOrCreateCartItem = async ({
@@ -565,19 +594,22 @@ export const updateCart = async (cart: Cart) => {
     include: {
       product: true, // Include the related product
     },
+    orderBy: {
+      createdAt: "asc",
+    },
   });
 
   const numItemsInCart = cartItems.reduce((acc, val) => {
     return acc + val.amount;
   }, 0);
   const cartTotal = cartItems.reduce((acc, val) => {
-    return acc + val.product.price;
+    return acc + val.product.price * val.amount;
   }, 0);
   const tax = cart.taxRate * cartTotal;
   const shipping = cartTotal ? cart.shipping : 0;
   const orderTotal = cartTotal + tax + shipping;
 
-  await prisma.cart.update({
+  const currentCart = await prisma.cart.update({
     where: {
       id: cart.id,
     },
@@ -588,9 +620,16 @@ export const updateCart = async (cart: Cart) => {
       shipping,
       orderTotal,
     },
+    include: {
+      cartItems: {
+        include: {
+          product: true,
+        },
+      },
+    },
   });
 
-  return { message: `Cart updated...` };
+  return { currentCart, cartItems };
 };
 
 export const createOrderAction = async () => {

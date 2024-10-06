@@ -1,4 +1,4 @@
-import { fetchCartItems, fetchOrCreateCart } from "@/utils/actions";
+"use client";
 import React from "react";
 import ProductsList from "../products/ProductsList";
 import Link from "next/link";

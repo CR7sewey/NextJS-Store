@@ -4724,3 +4724,174 @@ eexport const removeCartItemAction = async (
   }
 };
 ```
+
+### UpdateCartItem Action
+
+- actions.ts
+
+```ts
+export const updateCartItemAction = async ({
+  amount,
+  cartItemId,
+}: {
+  amount: number;
+  cartItemId: string;
+}) => {
+  const user = await getAuthUser();
+
+  try {
+    const cart = await fetchOrCreateCart({
+      userId: user.id,
+      errorOnFailure: true,
+    });
+    await db.cartItem.update({
+      where: {
+        id: cartItemId,
+        cartId: cart.id,
+      },
+      data: {
+        amount,
+      },
+    });
+    await updateCart(cart);
+    revalidatePath("/cart");
+    return { message: "cart updated" };
+  } catch (error) {
+    return renderError(error);
+  }
+};
+```
+
+### Cart Item Third Column - Complete
+
+```tsx
+"use client";
+import { useState } from "react";
+import SelectProductAmount from "../single-product/SelectProductAmount";
+import { Mode } from "../single-product/SelectProductAmount";
+import FormContainer from "../form/FormContainer";
+import { SubmitButton } from "../form/Buttons";
+import { removeCartItemAction, updateCartItemAction } from "@/utils/actions";
+import { useToast } from "../ui/use-toast";
+import { ReloadIcon } from "@radix-ui/react-icons";
+import { Button } from "../ui/button";
+
+function ThirdColumn({ quantity, id }: { quantity: number; id: string }) {
+  const [amount, setAmount] = useState(quantity);
+
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+  const handleAmountChange = async (value: number) => {
+    setIsLoading(true);
+    toast({ description: "Calculating..." });
+    const result = await updateCartItemAction({
+      amount: value,
+      cartItemId: id,
+    });
+    setAmount(value);
+    toast({ description: result.message });
+    setIsLoading(false);
+  };
+
+  return (
+    <div className="md:ml-8">
+      <SelectProductAmount
+        amount={amount}
+        setAmount={handleAmountChange}
+        mode={Mode.CartItem}
+        isLoading={isLoading}
+      />
+      <FormContainer action={removeCartItemAction}>
+        <input type="hidden" name="id" value={id} />
+        <SubmitButton size="sm" className="mt-4" text="remove" />
+      </FormContainer>
+    </div>
+  );
+}
+export default ThirdColumn;
+```
+
+### Bug Fix
+
+- make CartItemsList client component ('use client' directive)
+
+- refactor updateCart
+
+actions.ts
+
+```ts
+export const updateCart = async (cart: Cart) => {
+  const cartItems = await db.cartItem.findMany({
+    where: {
+      cartId: cart.id,
+    },
+    include: {
+      product: true, // Include the related product
+    },
+    orderBy: {
+      createdAt: "asc",
+    },
+  });
+
+  let numItemsInCart = 0;
+  let cartTotal = 0;
+
+  for (const item of cartItems) {
+    numItemsInCart += item.amount;
+    cartTotal += item.amount * item.product.price;
+  }
+  const tax = cart.taxRate * cartTotal;
+  const shipping = cartTotal ? cart.shipping : 0;
+  const orderTotal = cartTotal + tax + shipping;
+
+  const currentCart = await db.cart.update({
+    where: {
+      id: cart.id,
+    },
+
+    data: {
+      numItemsInCart,
+      cartTotal,
+      tax,
+      orderTotal,
+    },
+    include: includeProductClause,
+  });
+  return { currentCart, cartItems };
+};
+```
+
+- app/cart/page.tsx
+
+```tsx
+import CartItemsList from "@/components/cart/CartItemsList";
+import CartTotals from "@/components/cart/CartTotals";
+import SectionTitle from "@/components/global/SectionTitle";
+import { fetchOrCreateCart, updateCart } from "@/utils/actions";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
+async function CartPage() {
+  const { userId } = auth();
+  if (!userId) redirect("/");
+  const previousCart = await fetchOrCreateCart({ userId });
+  const { cartItems, currentCart } = await updateCart(previousCart);
+
+  if (cartItems.length === 0) {
+    return <SectionTitle text="Empty cart" />;
+  }
+  return (
+    <>
+      <SectionTitle text="Shopping Cart" />
+      <div className="mt-8 grid gap-4 lg:grid-cols-12">
+        <div className="lg:col-span-8">
+          <CartItemsList cartItems={cartItems} />
+        </div>
+        <div className="lg:col-span-4 lg:pl-4">
+          <CartTotals cart={currentCart} />
+        </div>
+      </div>
+    </>
+  );
+}
+export default CartPage;
+```
