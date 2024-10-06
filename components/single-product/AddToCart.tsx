@@ -1,6 +1,6 @@
 import { ProductSignInButton } from "../form/Buttons";
 import { auth } from "@clerk/nextjs/server";
-import AddToCartForm from "../cart/AddToCartForm";
+import AddToCartForm from "./AddToCartForm";
 
 function AddToCart({ productId }: { productId: string }) {
   const user = auth();
