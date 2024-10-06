@@ -1,5 +1,5 @@
 "use server";
-import { Product } from "@prisma/client";
+import { Cart, Product } from "@prisma/client";
 import prisma from "./db";
 import { redirect } from "next/navigation";
 import { actionFunction } from "./types";
@@ -404,17 +404,163 @@ export const fetchCartItems = async () => {
   return cartItems?.numItemsInCart || 0;
 };
 
-export const addToCartAction = async () => {};
+export const addToCartAction = async (prevState: any, formData: FormData) => {
+  const user = await getAuthUser();
+  console.log(formData, "como é que é");
+  const rawData = Object.fromEntries(formData);
+
+  try {
+    let cart = await fetchOrCreateCart({ userId: user.id });
+    const { productId, amount } = rawData;
+    let product = await fetchProduct2(productId as string);
+
+    await updateOrCreateCartItem({
+      cartId: cart.id,
+      productId: productId as string,
+      amount: Number(amount),
+    });
+    await updateCart(cart);
+
+    //return { message: `${amount} Product ${productId} added to the cart...` };
+  } catch (e) {
+    return renderError(e);
+  }
+  redirect(`/cart`);
+};
 
 export const removeCartItemAction = async () => {};
 
-export const updateCartItemAction = async () => {};
+export const updateCartItemAction = async (cartId: string) => {};
 
-const updateOrCreateCartItem = async () => {};
+// Helper functions for cart
+const updateOrCreateCartItem = async ({
+  cartId,
+  amount,
+  productId,
+}: {
+  cartId: string;
+  amount: number;
+  productId: string;
+}) => {
+  let cartItem = await prisma.cartItem.findFirst({
+    where: {
+      cartId,
+      productId,
+    },
+  });
 
-export const fetchOrCreateCart = async () => {};
+  if (cartItem) {
+    cartItem = await prisma.cartItem.update({
+      where: {
+        id: cartItem.id,
+      },
+      data: {
+        amount: cartItem.amount + amount,
+      },
+    });
+    return cartItem;
+  }
 
-export const updateCart = async () => {};
+  cartItem = await prisma.cartItem.create({
+    data: {
+      amount,
+      productId,
+      cartId,
+    },
+  });
+  return cartItem;
+};
+
+const fetchProduct2 = async (productId: string) => {
+  const product = await prisma.product.findUnique({
+    where: {
+      id: productId,
+    },
+  });
+
+  if (!product) {
+    throw new Error("Product not found");
+  }
+  return product;
+};
+
+export const fetchOrCreateCart = async ({
+  userId,
+  errorOnFailure = false,
+}: {
+  userId: string;
+  errorOnFailure?: boolean;
+}) => {
+  let cart = await prisma.cart.findFirst({
+    where: {
+      clerkId: userId,
+    },
+    include: {
+      cartItems: {
+        include: {
+          product: true,
+        },
+      },
+    },
+  });
+
+  if (!cart && errorOnFailure) {
+    throw new Error("Cart not found");
+  }
+
+  if (!cart) {
+    cart = await prisma.cart.create({
+      data: {
+        clerkId: userId,
+      },
+      include: {
+        cartItems: {
+          include: {
+            product: true,
+          },
+        },
+      },
+    });
+  }
+  return cart;
+};
+
+export const updateCart = async (cart: Cart) => {
+  const user = await getAuthUser();
+  const cartItems = await prisma.cartItem.findMany({
+    where: {
+      cartId: cart.id,
+    },
+    include: {
+      product: true, // Include the related product
+    },
+  });
+
+  const numItemsInCart = cartItems.reduce((acc, val) => {
+    return acc + val.amount;
+  }, 0);
+  const cartTotal = cartItems.reduce((acc, val) => {
+    return acc + val.product.price;
+  }, 0);
+  const tax = cart.taxRate * cartTotal;
+  const shipping = cartTotal ? cart.shipping : 0;
+  const orderTotal = cartTotal + tax + shipping;
+
+  await prisma.cart.update({
+    where: {
+      id: cart.id,
+    },
+    data: {
+      numItemsInCart,
+      cartTotal,
+      tax,
+      shipping,
+      orderTotal,
+    },
+  });
+
+  return { message: `Cart updated...` };
+};
 
 // HELPER FUNCTIONS
 

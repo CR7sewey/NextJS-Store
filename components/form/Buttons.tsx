@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import { SignedOut, SignInButton, SignUpButton } from "@clerk/nextjs";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
+import AddToCart from "../single-product/AddToCart";
 
 type SubmitButtonProps = {
   className?: string;
@@ -77,5 +78,19 @@ export const CardSubmitButton = ({ isFavorite }: { isFavorite: Boolean }) => {
         <FaRegHeart />
       )}
     </Button>
+  );
+};
+
+export const ProductSignInButton = () => {
+  return (
+    <SignInButton mode="modal">
+      <Button
+        type="button"
+        className="capitalize mt-8 cursor-pointer"
+        size="default"
+      >
+        Please Sign In
+      </Button>
+    </SignInButton>
   );
 };

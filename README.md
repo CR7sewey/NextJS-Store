@@ -4169,7 +4169,7 @@ model CartItem {
 ```ts
 export const fetchCartItems = async () => {};
 
-const fetchProduct = async () => {};
+const fetchProduct2 = async () => {};
 
 export const fetchOrCreateCart = async () => {};
 
@@ -4180,4 +4180,275 @@ export const addToCartAction = async () => {};
 export const removeCartItemAction = async () => {};
 
 export const updateCartItemAction = async () => {};
+```
+
+### FetchCartItems
+
+- actions.ts
+
+```ts
+export const fetchCartItems = async () => {
+  const { userId } = auth();
+
+  const cart = await db.cart.findFirst({
+    where: {
+      clerkId: userId ?? "",
+    },
+    select: {
+      numItemsInCart: true,
+    },
+  });
+  return cart?.numItemsInCart || 0;
+};
+```
+
+- components/navbar/CartButton.tsx
+
+```tsx
+async function CartButton() {
+  const numItemsInCart = await fetchCartItems();
+}
+```
+
+### SelectProductAmount Component
+
+- create components/single-product/SelectProductAmount.tsx
+
+```tsx
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+export enum Mode {
+  SingleProduct = "singleProduct",
+  CartItem = "cartItem",
+}
+
+type SelectProductAmountProps = {
+  mode: Mode.SingleProduct;
+  amount: number;
+  setAmount: (value: number) => void;
+};
+
+type SelectCartItemAmountProps = {
+  mode: Mode.CartItem;
+  amount: number;
+  setAmount: (value: number) => Promise<void>;
+  isLoading: boolean;
+};
+
+function SelectProductAmount(
+  props: SelectProductAmountProps | SelectCartItemAmountProps
+) {
+  const { mode, amount, setAmount } = props;
+
+  const cartItem = mode === Mode.CartItem;
+
+  return (
+    <>
+      <h4 className="mb-2">Amount : </h4>
+      <Select
+        defaultValue={amount.toString()}
+        onValueChange={(value) => setAmount(Number(value))}
+        disabled={cartItem ? props.isLoading : false}
+      >
+        <SelectTrigger className={cartItem ? "w-[100px]" : "w-[150px]"}>
+          <SelectValue placeholder={amount} />
+        </SelectTrigger>
+        <SelectContent>
+          {Array.from({ length: cartItem ? amount + 10 : 10 }, (_, index) => {
+            const selectValue = (index + 1).toString();
+            return (
+              <SelectItem key={index} value={selectValue}>
+                {selectValue}
+              </SelectItem>
+            );
+          })}
+        </SelectContent>
+      </Select>
+    </>
+  );
+}
+export default SelectProductAmount;
+```
+
+### AddToCart Component
+
+```tsx
+"use client";
+import { useState } from "react";
+import SelectProductAmount from "./SelectProductAmount";
+import { Mode } from "./SelectProductAmount";
+import FormContainer from "../form/FormContainer";
+import { SubmitButton } from "../form/Buttons";
+import { addToCartAction } from "@/utils/actions";
+import { useAuth } from "@clerk/nextjs";
+import { ProductSignInButton } from "../form/Buttons";
+
+function AddToCart({ productId }: { productId: string }) {
+  const [amount, setAmount] = useState(1);
+  const { userId } = useAuth();
+  return (
+    <div className="mt-4">
+      <SelectProductAmount
+        mode={Mode.SingleProduct}
+        amount={amount}
+        setAmount={setAmount}
+      />
+      {userId ? (
+        <FormContainer action={addToCartAction}>
+          <input type="hidden" name="productId" value={productId} />
+          <input type="hidden" name="amount" value={amount} />
+          <SubmitButton text="add to cart" size="default" className="mt-8" />
+        </FormContainer>
+      ) : (
+        <ProductSignInButton />
+      )}
+    </div>
+  );
+}
+export default AddToCart;
+```
+
+### AddToCart Action
+
+- actions.ts
+
+```ts
+import { Cart } from "@prisma/client";
+
+const fetchProduct = async (productId: string) => {
+  const product = await db.product.findUnique({
+    where: {
+      id: productId,
+    },
+  });
+
+  if (!product) {
+    throw new Error("Product not found");
+  }
+  return product;
+};
+const includeProductClause = {
+  cartItems: {
+    include: {
+      product: true,
+    },
+  },
+};
+
+export const fetchOrCreateCart = async ({
+  userId,
+  errorOnFailure = false,
+}: {
+  userId: string;
+  errorOnFailure?: boolean;
+}) => {
+  let cart = await db.cart.findFirst({
+    where: {
+      clerkId: userId,
+    },
+    include: includeProductClause,
+  });
+
+  if (!cart && errorOnFailure) {
+    throw new Error("Cart not found");
+  }
+
+  if (!cart) {
+    cart = await db.cart.create({
+      data: {
+        clerkId: userId,
+      },
+      include: includeProductClause,
+    });
+  }
+
+  return cart;
+};
+
+const updateOrCreateCartItem = async ({
+  productId,
+  cartId,
+  amount,
+}: {
+  productId: string;
+  cartId: string;
+  amount: number;
+}) => {
+  let cartItem = await db.cartItem.findFirst({
+    where: {
+      productId,
+      cartId,
+    },
+  });
+
+  if (cartItem) {
+    cartItem = await db.cartItem.update({
+      where: {
+        id: cartItem.id,
+      },
+      data: {
+        amount: cartItem.amount + amount,
+      },
+    });
+  } else {
+    cartItem = await db.cartItem.create({
+      data: { amount, productId, cartId },
+    });
+  }
+};
+
+export const updateCart = async (cart: Cart) => {
+  const cartItems = await db.cartItem.findMany({
+    where: {
+      cartId: cart.id,
+    },
+    include: {
+      product: true, // Include the related product
+    },
+  });
+
+  let numItemsInCart = 0;
+  let cartTotal = 0;
+
+  for (const item of cartItems) {
+    numItemsInCart += item.amount;
+    cartTotal += item.amount * item.product.price;
+  }
+  const tax = cart.taxRate * cartTotal;
+  const shipping = cartTotal ? cart.shipping : 0;
+  const orderTotal = cartTotal + tax + shipping;
+
+  await db.cart.update({
+    where: {
+      id: cart.id,
+    },
+    data: {
+      numItemsInCart,
+      cartTotal,
+      tax,
+      orderTotal,
+    },
+  });
+};
+
+export const addToCartAction = async (prevState: any, formData: FormData) => {
+  const user = await getAuthUser();
+  try {
+    const productId = formData.get("productId") as string;
+    const amount = Number(formData.get("amount"));
+    await fetchProduct(productId);
+    const cart = await fetchOrCreateCart({ userId: user.id });
+    await updateOrCreateCartItem({ productId, cartId: cart.id, amount });
+    await updateCart(cart);
+  } catch (error) {
+    return renderError(error);
+  }
+  redirect("/cart");
+};
 ```

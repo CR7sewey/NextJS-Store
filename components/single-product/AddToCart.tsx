@@ -1,13 +1,13 @@
-"use client";
-import React from "react";
-import { Button } from "../ui/button";
+import { ProductSignInButton } from "../form/Buttons";
+import { auth } from "@clerk/nextjs/server";
+import AddToCartForm from "../cart/AddToCartForm";
 
-function AddToCart() {
-  return (
-    <Button className="capitalize mt-8" size="lg">
-      add to cart
-    </Button>
-  );
+function AddToCart({ productId }: { productId: string }) {
+  const user = auth();
+  if (!user.userId) {
+    return <ProductSignInButton />;
+  }
+  return <AddToCartForm productId={productId} />;
 }
 
 export default AddToCart;

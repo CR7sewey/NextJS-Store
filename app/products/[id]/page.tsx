@@ -59,7 +59,7 @@ export default async function SingleProduct({
             {product.description}
           </p>
           {/* Add To Cart Button */}
-          <AddToCart />
+          <AddToCart productId={product.id} />
         </div>
       </div>
       <div className="mt-5">
