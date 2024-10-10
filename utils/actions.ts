@@ -632,8 +632,61 @@ export const updateCart = async (cart: Cart) => {
   return { currentCart, cartItems };
 };
 
-export const createOrderAction = async () => {
-  return { message: "Order placed..." };
+export const createOrderAction = async (prevState: any, formData: FormData) => {
+  const user = await getAuthUser();
+  try {
+    const cart = await fetchOrCreateCart({
+      userId: user.id,
+      errorOnFailure: true,
+    });
+
+    const order = await prisma.order.create({
+      data: {
+        clerkId: user.id,
+        products: cart.numItemsInCart,
+        orderTotal: cart.orderTotal,
+        tax: cart.tax,
+        shipping: cart.shipping,
+        email: user.emailAddresses[0].emailAddress,
+      },
+    });
+
+    await prisma.cart.delete({
+      where: {
+        id: cart.id,
+      },
+    });
+  } catch (e) {
+    return renderError(e);
+  }
+  redirect("/orders");
+};
+
+export const fetchUserOrders = async () => {
+  const user = await getAuthUser();
+  const orders = await prisma.order.findMany({
+    where: {
+      clerkId: user.id,
+      isPaid: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+  return orders;
+};
+
+export const fetchAdminOrders = async () => {
+  const user = await getAdminUser();
+  const orders = await prisma.order.findMany({
+    where: {
+      isPaid: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+  return orders;
 };
 
 // HELPER FUNCTIONS

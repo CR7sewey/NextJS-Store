@@ -4813,6 +4813,11 @@ export default ThirdColumn;
 
 ### Bug Fix
 
+- When changing the Amount for !== products the order of display changes
+  but the amount remains discordinated (then if updated again goes back to
+  normal.) Thats bcs we have server and client components, which makes it not
+  synchronous.
+
 - make CartItemsList client component ('use client' directive)
 
 - refactor updateCart
@@ -4894,4 +4899,81 @@ async function CartPage() {
   );
 }
 export default CartPage;
+```
+
+### Order Model
+
+```prisma
+model Order {
+  id        String   @id @default(uuid())
+  clerkId  String
+  products Int  @default(0)
+  orderTotal Int @default(0)
+  tax Int @default(0)
+  shipping Int @default(0)
+  email String
+  isPaid Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+```
+
+### Order Actions
+
+```ts
+export const createOrderAction = async (prevState: any, formData: FormData) => {
+  const user = await getAuthUser();
+  try {
+    const cart = await fetchOrCreateCart({
+      userId: user.id,
+      errorOnFailure: true,
+    });
+    const order = await db.order.create({
+      data: {
+        clerkId: user.id,
+        products: cart.numItemsInCart,
+        orderTotal: cart.orderTotal,
+        tax: cart.tax,
+        shipping: cart.shipping,
+        email: user.emailAddresses[0].emailAddress,
+      },
+    });
+
+    await db.cart.delete({
+      where: {
+        id: cart.id,
+      },
+    });
+  } catch (error) {
+    return renderError(error);
+  }
+  redirect("/orders");
+};
+export const fetchUserOrders = async () => {
+  const user = await getAuthUser();
+  const orders = await db.order.findMany({
+    where: {
+      clerkId: user.id,
+      isPaid: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+  return orders;
+};
+
+export const fetchAdminOrders = async () => {
+  const user = await getAdminUser();
+
+  const orders = await db.order.findMany({
+    where: {
+      isPaid: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+  return orders;
+};
 ```
