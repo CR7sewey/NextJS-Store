@@ -4977,3 +4977,88 @@ export const fetchAdminOrders = async () => {
   return orders;
 };
 ```
+
+### Orders Page
+
+- utils/format.ts
+
+```ts
+export const formatDate = (date: Date) => {
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }).format(date);
+};
+```
+
+- create app/orders/loading.tsx
+
+```tsx
+"use client";
+
+import LoadingTable from "@/components/global/LoadingTable";
+
+function loading() {
+  return <LoadingTable />;
+}
+export default loading;
+```
+
+- app/orders/page.tsx
+
+```tsx
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+import SectionTitle from "@/components/global/SectionTitle";
+import { fetchUserOrders } from "@/utils/actions";
+import { formatCurrency, formatDate } from "@/utils/format";
+async function OrdersPage() {
+  const orders = await fetchUserOrders();
+
+  return (
+    <>
+      <SectionTitle text="Your Orders" />
+      <div>
+        <Table>
+          <TableCaption>Total orders : {orders.length}</TableCaption>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Products</TableHead>
+              <TableHead>Order Total</TableHead>
+              <TableHead>Tax</TableHead>
+              <TableHead>Shipping</TableHead>
+              <TableHead>Date</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {orders.map((order) => {
+              const { id, products, orderTotal, tax, shipping, createdAt } =
+                order;
+
+              return (
+                <TableRow key={order.id}>
+                  <TableCell>{products}</TableCell>
+                  <TableCell>{formatCurrency(orderTotal)}</TableCell>
+                  <TableCell>{formatCurrency(tax)}</TableCell>
+                  <TableCell>{formatCurrency(shipping)}</TableCell>
+                  <TableCell>{formatDate(createdAt)}</TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+    </>
+  );
+}
+export default OrdersPage;
+```
