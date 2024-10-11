@@ -644,6 +644,13 @@ export const createOrderAction = async (prevState: any, formData: FormData) => {
 
     cartId = cart.id;
 
+    await prisma.order.deleteMany({
+      where: {
+        clerkId: user.id,
+        isPaid: false,
+      },
+    });
+
     const order = await prisma.order.create({
       data: {
         clerkId: user.id,
@@ -656,12 +663,6 @@ export const createOrderAction = async (prevState: any, formData: FormData) => {
     });
 
     orderId = order.id;
-
-    await prisma.cart.delete({
-      where: {
-        id: cart.id,
-      },
-    });
   } catch (e) {
     return renderError(e);
   }

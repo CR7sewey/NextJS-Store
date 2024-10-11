@@ -1,13 +1,5 @@
-"use client";
 import React from "react";
-import ProductsList from "../products/ProductsList";
-import Link from "next/link";
 import { Card, CardContent } from "../ui/card";
-import Image from "next/image";
-import format from "@/utils/format";
-import AddToCartForm from "../single-product/AddToCartForm";
-import { Mode } from "../single-product/SelectProductAmount";
-import { CartItem, Product } from "@prisma/client";
 import { CartItemWithProduct } from "@/utils/types";
 import { FirstColumn, FourthColumn, SecondColumn } from "./CartItemColumns";
 import ThirdColumn from "./ThirdColumn";

@@ -5201,3 +5201,212 @@ export const createOrderAction = async (prevState: any, formData: FormData) => {
   redirect(`/checkout?orderId=${orderId}&cartId=${cartId}`);
 };
 ```
+
+### Stripe ClientSecret Fetch Call and Response Diagram
+
+```plaintext
++--------+    Fetch clientSecret    +--------+   Request        +---------+
+| Client | -----------------------> | Server | ---------------> | Stripe  |
+|        |                          |        |                  |  API    |
+|        |                          |        | <--------------- |         |
+|        | <----------------------- |        |   clientSecret   |         |
+|        |  clientSecret response   |        |                  |         |
++--------+                          +--------+                  +---------+
+
+Checkout.tsx                        payment/route.ts
+
+```
+
+### Checkout Page
+
+- create app/checkout/page.tsx
+
+```tsx
+"use client";
+import axios from "axios";
+import { useSearchParams } from "next/navigation";
+import React, { useCallback } from "react";
+import { loadStripe } from "@stripe/stripe-js";
+import {
+  EmbeddedCheckoutProvider,
+  EmbeddedCheckout,
+} from "@stripe/react-stripe-js";
+
+const stripePromise = loadStripe(
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string
+);
+
+export default function CheckoutPage() {
+  const searchParams = useSearchParams();
+
+  const orderId = searchParams.get("orderId");
+  const cartId = searchParams.get("cartId");
+
+  const fetchClientSecret = useCallback(async () => {
+    // Create a Checkout Session
+    const response = await axios.post("/api/payment", {
+      orderId: orderId,
+      cartId: cartId,
+    });
+    return response.data.clientSecret;
+  }, []);
+
+  const options = { fetchClientSecret };
+
+  return (
+    <div id="checkout">
+      <EmbeddedCheckoutProvider stripe={stripePromise} options={options}>
+        <EmbeddedCheckout />
+      </EmbeddedCheckoutProvider>
+    </div>
+  );
+}
+```
+
+### API - Payment Route
+
+- create api/payment/route.ts
+
+```ts
+import Stripe from "stripe";
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+import { type NextRequest } from "next/server";
+import db from "@/utils/db";
+
+export const POST = async (req: NextRequest) => {
+  const requestHeaders = new Headers(req.headers);
+  const origin = requestHeaders.get("origin");
+
+  const { orderId, cartId } = await req.json();
+
+  const order = await db.order.findUnique({
+    where: {
+      id: orderId,
+    },
+  });
+  const cart = await db.cart.findUnique({
+    where: {
+      id: cartId,
+    },
+    include: {
+      cartItems: {
+        include: {
+          product: true,
+        },
+      },
+    },
+  });
+  if (!order || !cart) {
+    return Response.json(null, {
+      status: 404,
+      statusText: "Not Found",
+    });
+  }
+  const line_items = cart.cartItems.map((cartItem) => {
+    return {
+      quantity: cartItem.amount,
+      price_data: {
+        currency: "usd",
+        product_data: {
+          name: cartItem.product.name,
+          images: [cartItem.product.image],
+        },
+        unit_amount: cartItem.product.price * 100, // price in cents
+      },
+    };
+  });
+  try {
+    const session = await stripe.checkout.sessions.create({
+      ui_mode: "embedded",
+      metadata: { orderId, cartId },
+      line_items: line_items,
+      mode: "payment",
+      return_url: `${origin}/api/confirm?session_id={CHECKOUT_SESSION_ID}`,
+    });
+
+    return Response.json({ clientSecret: session.client_secret });
+  } catch (error) {
+    console.log(error);
+
+    return Response.json(null, {
+      status: 500,
+      statusText: "Internal Server Error",
+    });
+  }
+};
+```
+
+- product structure
+
+```ts
+return {
+  quantity: 1,
+  price_data: {
+    currency: "usd",
+    product_data: {
+      name: "product name",
+      images: ["product image url"],
+    },
+    unit_amount: cartItem.product.price * 100, // price in cents
+  },
+};
+```
+
+```plaintext
++--------+    Checkout Session ID   +--------+    redirect      +---------+
+| Server | -----------------------> | Server | ---------------> | Orders  |
+|        |                          |        |                  |         |
+|        |                          |        |                  |         |
+|        |                          |        |                  |         |
+|        |                          |        |                  |         |
++--------+                          +--------+                  +---------+
+
+payment/route.ts                    confirm/route.ts            orders page
+
+```
+
+### API - Confirm Route
+
+```ts
+import Stripe from "stripe";
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+import { redirect } from "next/navigation";
+
+import { type NextRequest } from "next/server";
+import db from "@/utils/db";
+
+export const GET = async (req: NextRequest) => {
+  const { searchParams } = new URL(req.url);
+  const session_id = searchParams.get("session_id") as string;
+
+  try {
+    const session = await stripe.checkout.sessions.retrieve(session_id);
+    // console.log(session);
+
+    const orderId = session.metadata?.orderId;
+    const cartId = session.metadata?.cartId;
+    if (session.status === "complete") {
+      await db.order.update({
+        where: {
+          id: orderId,
+        },
+        data: {
+          isPaid: true,
+        },
+      });
+      await db.cart.delete({
+        where: {
+          id: cartId,
+        },
+      });
+    }
+  } catch (err) {
+    console.log(err);
+    return Response.json(null, {
+      status: 500,
+      statusText: "Internal Server Error",
+    });
+  }
+  redirect("/orders");
+};
+```
