@@ -634,11 +634,15 @@ export const updateCart = async (cart: Cart) => {
 
 export const createOrderAction = async (prevState: any, formData: FormData) => {
   const user = await getAuthUser();
+  let orderId: null | string = null;
+  let cartId: null | string = null;
   try {
     const cart = await fetchOrCreateCart({
       userId: user.id,
       errorOnFailure: true,
     });
+
+    cartId = cart.id;
 
     const order = await prisma.order.create({
       data: {
@@ -651,6 +655,8 @@ export const createOrderAction = async (prevState: any, formData: FormData) => {
       },
     });
 
+    orderId = order.id;
+
     await prisma.cart.delete({
       where: {
         id: cart.id,
@@ -659,7 +665,7 @@ export const createOrderAction = async (prevState: any, formData: FormData) => {
   } catch (e) {
     return renderError(e);
   }
-  redirect("/orders");
+  redirect(`/checkout?orderId=${orderId}&cartId=${cartId}`);
 };
 
 export const fetchUserOrders = async () => {

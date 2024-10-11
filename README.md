@@ -5140,3 +5140,64 @@ async function SalesPage() {
 }
 export default SalesPage;
 ```
+
+### Stripe
+
+[Embedded Form](https://docs.stripe.com/checkout/embedded/quickstart)
+
+- setup and add keys to .env
+
+```sh
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
+STRIPE_SECRET_KEY=
+```
+
+- install
+
+```sh
+npm install --save @stripe/react-stripe-js @stripe/stripe-js stripe axios
+```
+
+### Refactor Order and createOrderAction
+
+```prisma
+model Order {
+  isPaid Boolean @default(false)
+}
+```
+
+```ts
+export const createOrderAction = async (prevState: any, formData: FormData) => {
+  const user = await getAuthUser();
+  let orderId: null | string = null;
+  let cartId: null | string = null;
+  try {
+    const cart = await fetchOrCreateCart({
+      userId: user.id,
+      errorOnFailure: true,
+    });
+    cartId = cart.id;
+    await db.order.deleteMany({
+      where: {
+        clerkId: user.id,
+        isPaid: false,
+      },
+    });
+
+    const order = await db.order.create({
+      data: {
+        clerkId: user.id,
+        products: cart.numItemsInCart,
+        orderTotal: cart.orderTotal,
+        tax: cart.tax,
+        shipping: cart.shipping,
+        email: user.emailAddresses[0].emailAddress,
+      },
+    });
+    orderId = order.id;
+  } catch (error) {
+    return renderError(error);
+  }
+  redirect(`/checkout?orderId=${orderId}&cartId=${cartId}`);
+};
+```
